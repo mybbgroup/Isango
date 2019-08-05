@@ -116,17 +116,10 @@ function isango_activate()
 function isango_deactivate()
 {
     global $db;
-    
-	// Find the master and any children
-	$query = $db->simple_select('themestylesheets', 'tid,name', "name='isango.css'");
-	// Delete them all from the server
-	while ($styleSheet = $db->fetch_array($query)) {
-		@unlink(MYBB_ROOT."cache/themes/{$styleSheet['tid']}_{$styleSheet['name']}");
-		@unlink(MYBB_ROOT."cache/themes/theme{$styleSheet['tid']}/{$styleSheet['name']}");
-	}
-	// Then delete them from the database
+    foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(MYBB_ROOT.'cache/themes')) as $file){
+        if(stripos($file , 'isango') !== false) @unlink($file);
+    }
 	$db->delete_query('themestylesheets', "name='isango.css'");
-	// Now remove them from the CSS file list
 	require_once MYBB_ADMIN_DIR."inc/functions_themes.php";
     update_theme_stylesheet_list(1, false, true);
     
