@@ -1,0 +1,62 @@
+a.button[class*=isango_] {
+  border: none;
+  border-radius: 3px;
+  padding: 8px 10px;
+  color: white;
+  text-align: center;
+  -webkit-transition: all 0.5s;
+  transition: all 0.5s;
+}
+
+a.button[class*=isango_]:hover {
+  text-decoration: none;
+}
+
+a.button[class*=isango_]:hover span:before {
+  -webkit-transform: rotate(45deg);
+          transform: rotate(45deg);
+  -webkit-transition: all 0.5s;
+  transition: all 0.5s;
+}
+
+a.button[class*=isango_] span {
+  background: none;
+  padding-left: 30px;
+}
+
+a.button[class*=isango_] span:before {
+  -webkit-transition: all 0.5s;
+  transition: all 0.5s;
+  position: absolute;
+  margin-left: -32px;
+  margin-top: -2px;
+}
+
+a.button.isango_google {
+  background: #E44134;
+  border: 1px solid #ca281b;
+  min-width: 100px;
+}
+
+a.button.isango_google span:before {
+  content: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24px' height='24px' fill='white'><path d='M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm6.9 14.6c-.3 1.2-1 2.3-1.9 3.1-.9.8-1.9 1.3-3 1.6-1.2.3-2.6.3-3.8 0-1-.3-1.9-.7-2.7-1.4-.8-.7-1.5-1.5-2-2.5-.7-1.5-1-3.2-.6-4.8.1-.6.3-1.3.6-1.9.8-1.8 2.3-3.1 4.2-3.7 1.6-.6 3.4-.5 5 0 .9.3 1.7.8 2.4 1.5-.2.3-.5.5-.7.7L15 8.6c-.5-.4-1-.8-1.6-.9-.7-.2-1.5-.2-2.2-.1-.9.1-1.6.6-2.2 1.2-.5.5-.9 1.1-1.1 1.8-.3.9-.3 2 0 2.9.3.9.9 1.7 1.7 2.3.5.3 1.1.6 1.7.7.6.1 1.2.1 1.8 0 .6-.1 1.1-.3 1.6-.6.8-.5 1.3-1.4 1.5-2.3h-4.1v-2.9h7c.2 1.2.2 2.6-.2 3.9z' /></svg>");
+}
+
+a.button.isango_google:hover {
+  background: #ca281b;
+}
+
+a.button.isango_microsoft {
+  background: #0067B8;
+  border: 1px solid #004a85;
+  min-width: 100px;
+}
+
+a.button.isango_microsoft span:before {
+  content: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24px' height='24px' fill='white'><path d='M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zM5.5 5.5h6v6h-6v-6zm7 0h6v6h-6v-6zm-7 7h6v6h-6v-6zm7 0h6v6h-6v-6z' /></svg>");
+}
+
+a.button.isango_microsoft:hover {
+  background: #004a85;
+}
+/*# sourceMappingURL=isango.css.map */
