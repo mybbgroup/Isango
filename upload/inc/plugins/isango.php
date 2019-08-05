@@ -5,8 +5,9 @@ if (!defined("IN_MYBB")) {
 }
 
 $plugins->add_hook('member_login', 'isango_bridge');
-$plugins->add_hook('member_login_end', 'isango_buttons');
 $plugins->add_hook('admin_settings_print_peekers', 'isango_settingspeekers');
+$plugins->add_hook('global_start', 'isango_buttons');
+//$plugins->add_hook('member_login_end', 'isango_buttons');
 
 function isango_info()
 {
@@ -26,6 +27,36 @@ function isango_activate()
 {
     global $db, $lang;
     $lang->load('isango');
+
+	$stylesheet = @file_get_contents(MYBB_ROOT.'inc/plugins/isango/isango.css');
+	$attachedto = '';
+	$name = 'isango.css';
+	$css = array(
+		'name' => $name,
+		'tid' => 1,
+		'attachedto' => $db->escape_string($attachedto),
+		'stylesheet' => $db->escape_string($stylesheet),
+		'cachefile' => $name,
+		'lastmodified' => TIME_NOW,
+	);
+	$db->update_query('themestylesheets', array(
+		"attachedto" => $attachedto
+	), "name='{$name}'");
+	$query = $db->simple_select('themestylesheets', 'sid', "tid='1' AND name='{$name}'");
+	$sid = (int) $db->fetch_field($query, 'sid');
+	if ($sid) {
+		$db->update_query('themestylesheets', $css, "sid='{$sid}'");
+	} else {
+		$sid = $db->insert_query('themestylesheets', $css);
+		$css['sid'] = (int) $sid;
+	}
+	require_once MYBB_ADMIN_DIR."inc/functions_themes.php";
+	if (!cache_stylesheet(1, $css['cachefile'], $stylesheet))
+	{
+		$db->update_query("themestylesheets", array('cachefile' => "css.php?stylesheet={$sid}"), "sid='{$sid}'", 1);
+	}
+    update_theme_stylesheet_list(1, false, true);    
+
     $gid = (int) ($db->fetch_field($db->simple_select("settinggroups", "gid", "name='isango'"), "gid"));
     $isango_opts = array();
     $disporder = 0;
@@ -75,10 +106,35 @@ function isango_activate()
     }
 
     rebuild_settings();
+
+    require MYBB_ROOT . "inc/adminfunctions_templates.php";
+    foreach(['header_welcomeblock_guest','member_login','member_register'] as $tpl){
+        find_replace_templatesets($tpl, '#<\/form>#', '</form><!-- isango -->{$isango_buttons}<!-- /isango -->');
+    }
 }
 
 function isango_deactivate()
-{}
+{
+    global $db;
+    
+	// Find the master and any children
+	$query = $db->simple_select('themestylesheets', 'tid,name', "name='isango.css'");
+	// Delete them all from the server
+	while ($styleSheet = $db->fetch_array($query)) {
+		@unlink(MYBB_ROOT."cache/themes/{$styleSheet['tid']}_{$styleSheet['name']}");
+		@unlink(MYBB_ROOT."cache/themes/theme{$styleSheet['tid']}/{$styleSheet['name']}");
+	}
+	// Then delete them from the database
+	$db->delete_query('themestylesheets', "name='isango.css'");
+	// Now remove them from the CSS file list
+	require_once MYBB_ADMIN_DIR."inc/functions_themes.php";
+    update_theme_stylesheet_list(1, false, true);
+    
+    require MYBB_ROOT . "inc/adminfunctions_templates.php";
+    foreach(['header_welcomeblock_guest','member_login','member_register'] as $tpl){
+        find_replace_templatesets($tpl, '#\<!--\sisango\s--\>(.+)\<!--\s\/isango\s--\>#is', '', 0);
+    }
+}
 
 function isango_install()
 {
@@ -345,7 +401,9 @@ function isango_buttons()
             $isango_buttons .= '<a class="button isango_' . $gateway . '" href="member.php?action=login&gateway=' . $gateway . '"><span>' . ucfirst($gateway) . '</span></a>';
         }
     }
-    $isango_buttons = "<br><div style='text-align: center;'>" . $isango_buttons . "</div>";
+    if(!empty($isango_buttons)){
+        $isango_buttons = "<div style='text-align: center; margin-top: 10px;'>" . $isango_buttons . "</div>";
+    }
 }
 
 function isango_gateway_error(string $gateway)
@@ -373,7 +431,7 @@ function isango_gateway_error(string $gateway)
 // Core configurations of supported gateways, also returns list of supported gateways
 function isango_config(string $gateway = "", string $mode = "")
 {
-    $path = dirname(__FILE__) . '/isango/%s.ini';
+    $path = MYBB_ROOT . 'inc/plugins/isango/%s.ini';
     $gateways = array();
 
     foreach (glob(sprintf($path, '*')) as $gate) {
@@ -386,15 +444,15 @@ function isango_config(string $gateway = "", string $mode = "")
 
     $gateway = strtolower($gateway);
     if (in_array($gateway, $gateways)) {
-        $config = parse_ini_file(sprintf($path, $gateway), true);
+        $conf = parse_ini_file(sprintf($path, $gateway), true);
 
         if (!empty($mode)) {
-            if (array_key_exists($mode, $config)) {
-                return $config[$mode];
+            if (array_key_exists($mode, $conf)) {
+                return $conf[$mode];
             }
             return false;
         }
-        return $config;
+        return $conf;
     }
     return false;
 }
