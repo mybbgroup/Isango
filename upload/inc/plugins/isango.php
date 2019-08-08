@@ -4,10 +4,9 @@ if (!defined("IN_MYBB")) {
     die("Nice try but wrong place, smartass. Be a good boy and use navigation.");
 }
 
+$plugins->add_hook('global_start', 'isango_buttons');
 $plugins->add_hook('member_login', 'isango_bridge');
 $plugins->add_hook('admin_settings_print_peekers', 'isango_settingspeekers');
-$plugins->add_hook('global_start', 'isango_buttons');
-//$plugins->add_hook('member_login_end', 'isango_buttons');
 
 function isango_info()
 {
@@ -189,10 +188,17 @@ function isango_bridge()
                     // Get the access token
                     $params = array('code' => $mybb->input['code'], 'state' => $mybb->input['state']);
                     $data = isango_curl($params, $mybb->input['gateway'], 'token');
-
+                    
                     // Get user information
-                    $params = array('code' => $data['access_token']);
-                    $user = isango_curl($params, $mybb->input['gateway']);
+                    $user = array();
+                    $conf = isango_config($mybb->input['gateway'], 'api');
+                    if(is_string($conf['url'])) $conf['url'] = (array)$conf['url'];
+                    foreach ($conf['url'] as $url) {
+                        $params = array('code' => $data['access_token'], 'url' => $url);
+                        $response = isango_curl($params, $mybb->input['gateway']);
+                        $user = array_merge($user, $response);
+                    }
+                    
                 } catch (Exception $e) {
                     $errors = $e->getMessage();
                 }
@@ -219,6 +225,7 @@ function isango_bridge()
                     'client_id' => $mybb->settings['isango_' . $gateway . '_id'],
                     'redirect_uri' => $mybb->settings['bburl'] . '/member.php?action=login&gateway=' . $gateway,
                     'state' => $state,
+                    'response_type' => 'code'
                 ), $conf['params']);
 
                 // Redirect the user to authorization page
@@ -233,22 +240,7 @@ function isango_login($user, $gateway)
 {
     global $db, $lang;
     $lang->load('isango');
-
-    switch ($gateway) {
-        case 'google':
-            $name = $db->escape_string($user['name']);
-            $email = $db->escape_string($user['email']);
-            //$avatar = $user['picture']; // Check for size, remote allowance
-            break;
-        
-        case 'microsoft':
-            $name = $db->escape_string($user['name']);
-            $email = $db->escape_string($user['emails']['account']);
-            break;
-        
-        default:
-            break;
-    }
+    extract(isango_fetchinfo($user, $gateway));
     
     // Check availability of username by email
     $query = $db->simple_select("users", "uid, loginkey", "email='{$email}'");
@@ -265,7 +257,6 @@ function isango_login($user, $gateway)
         $possible_usernames[] = isango_purename($temp1[0]);
         $temp2 = explode(' ', $name);
         $possible_usernames[] = isango_purename($temp2[0]);
-        $possible_usernames[] = isango_purename($email);
         $possible_usernames[] = isango_purename($temp1[0] . '@' . $gateway);
         if (count($temp2) > 1) {
             $possible_usernames[] = isango_purename(implode('_', $temp2));
@@ -330,17 +321,26 @@ function isango_purename($username)
     return $username;
 }
 
+function isango_fetchinfo($u, $gateway)
+{
+	global $db;
+	$info = array();
+    $conf = isango_config($gateway, 'info');
+	foreach($conf as $key => $val)
+	{
+		eval("\$val = \"".$val."\";");
+		$info[$key] = $db->escape_string($val);
+	}
+	return $info;
+}
+
 function isango_curl(array $params, string $gateway, string $mode = 'api')
 {
     global $mybb;
     $conf = isango_config($gateway, $mode);
-    // Yahoo needs a GUID to access API
-    if ($gateway == 'yahoo' && $mode == 'api') {
-        $conf['url'] = sprintf($conf['url'], $params['guid']);
-    }
-
+    $url = isset($params['url']) ? $params['url'] : $conf['url'];
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $conf['url']);
+    curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     if ($mode == 'token') {

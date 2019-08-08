@@ -1,4 +1,4 @@
 # Isango
 MyBB Simple Social Login / Register Using oAuth 2.0
 
-Currently supported: Google, Microsoft
+Currently supported: Discord, Google, LinkedIn, Microsoft, Yandex
