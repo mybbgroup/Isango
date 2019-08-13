@@ -5,6 +5,7 @@ if (!defined("IN_MYBB")) {
 }
 
 $plugins->add_hook('global_start', 'isango_buttons');
+$plugins->add_hook('error', 'isango_buttons_nopermit');
 $plugins->add_hook('member_login', 'isango_bridge');
 $plugins->add_hook('usercp_menu', 'isango_ucpnav', 25);
 $plugins->add_hook('usercp_start', 'isango_connections');
@@ -496,7 +497,13 @@ function isango_buttons($return = false)
     if ($return) {
         return $isango_buttons;
     }
+}
 
+function isango_buttons_nopermit(&$error)
+{
+    if (!empty($error) && strpos($error, 'value="do_login"') !== false) {
+        return $error . isango_buttons(true);
+    }
 }
 
 function isango_gateway_error(string $gateway)
