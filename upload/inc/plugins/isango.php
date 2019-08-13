@@ -144,7 +144,7 @@ function isango_install()
             'template' => $db->escape_string(@file_get_contents($template)),
             'sid' => -2,
             'version' => 100,
-            'dateline' => TIME_NOW
+            'dateline' => TIME_NOW,
         ));
     }
 
@@ -276,7 +276,22 @@ function isango_login($user, $gateway)
 {
     global $db, $lang, $mybb;
     $lang->load('isango');
-    extract(isango_fetchinfo($user, $gateway));
+    $errors = array();
+    $udata = isango_fetchinfo($user, $gateway);
+
+    foreach ($udata as $key => $val) {
+        $udata[$key] = $val = filter_var($db->escape_string($val), FILTER_SANITIZE_STRING);
+        if (empty($val) || ($val == "email" && !filter_var($val, FILTER_VALIDATE_EMAIL))) {
+            $errors[] = "'" . ucfirst($key) . "'";
+        }
+    }
+
+    if (!empty($errors)) {
+        $errors = implode(', ', $errors);
+        error($lang->sprintf($lang->isango_invalid_data, ucfirst($gateway), $errors), $lang->isango_connect_error_title);
+    } else {
+        extract($udata);
+    }
 
     // Check for banned email
     if (is_banned_email($email, true)) {
@@ -298,11 +313,11 @@ function isango_login($user, $gateway)
     $connected = 0;
     $logged_in = $mybb->user['uid'];
     if ($user_info) {
-        $connected = $db->num_rows($db->simple_select('isango', 'uid', "(gateway='{$gateway}' AND email='{$email}') OR (gateway='{$gateway}' AND cuid='{$id}')"));
+        $connected = $db->fetch_array($db->simple_select('isango', 'uid', "(gateway='{$gateway}' AND email='{$email}') OR (gateway='{$gateway}' AND cuid='{$id}')"));
     }
 
     if (!$logged_in) {
-        if(!$user_info){ // User not found, need to register a fresh account
+        if (!$user_info) { // User not found, need to register a fresh account
             // Accumulate all possible usernames based on available data
             $possible_usernames = array();
             $temp1 = explode('@', $email);
@@ -355,13 +370,16 @@ function isango_login($user, $gateway)
         // We have the user with us, let's log the user in
         my_setcookie("mybbuser", $user_info['uid'] . "_" . $user_info['loginkey'], null, true, "lax");
     } else { // User already logged in
-        $user_info['uid'] = $mybb->user['uid'];
         $redirect_url = 'usercp.php?action=connections';
         if ($connected) {
+            if ($connected['uid'] !== $mybb->user['uid']) {
+                error($lang->isango_existing_connection, $lang->isango_connect_error_title);
+            }
             $redirect_message = $lang->sprintf($lang->auth_already_connected_redirect, ucfirst($gateway));
         } else {
             $redirect_message = $lang->sprintf($lang->auth_success_connected_redirect, ucfirst($gateway));
         }
+        $user_info['uid'] = $mybb->user['uid'];
     }
 
     // Make the connection entry
@@ -475,7 +493,10 @@ function isango_buttons($return = false)
     if (!empty($isango_buttons)) {
         $isango_buttons = "<div style='text-align: center; margin-top: 10px;'>" . $isango_buttons . "</div>";
     }
-    if($return) return $isango_buttons;
+    if ($return) {
+        return $isango_buttons;
+    }
+
 }
 
 function isango_gateway_error(string $gateway)
@@ -541,20 +562,18 @@ function isango_connections()
     $lang->load('isango');
     add_breadcrumb($lang->nav_usercp, "usercp.php");
 
-    if ($mybb->input['action'] == "delete_connections" && $mybb->request_method == "post")
-    {
+    if ($mybb->input['action'] == "delete_connections" && $mybb->request_method == "post") {
         verify_post_check($mybb->get_input('my_post_key'));
 
-        if($_POST['cid']){
+        if ($_POST['cid']) {
             $cids = implode(',', array_map('intval', $_POST['cid']));
-            $db->delete_query("isango", 'uid="'.$mybb->user['uid'].'" AND cid IN ('.$cids.')');
+            $db->delete_query("isango", 'uid="' . $mybb->user['uid'] . '" AND cid IN (' . $cids . ')');
         }
-        
+
         $mybb->input['action'] = "connections";
     }
 
-    if ($mybb->input['action'] == "connections")
-    {
+    if ($mybb->input['action'] == "connections") {
         add_breadcrumb($lang->isango_nav_connections);
         $connections = '';
         $query = $db->simple_select('isango', '*', 'uid="' . $mybb->user['uid'] . '"');
@@ -570,7 +589,9 @@ function isango_connections()
         }
 
         $isango_buttons = isango_buttons(true);
-        if(empty($isango_buttons)) $isango_buttons = $lang->isango_no_service;
+        if (empty($isango_buttons)) {
+            $isango_buttons = $lang->isango_no_service;
+        }
 
         eval("\$connect_page = \"" . $templates->get("usercp_connections") . "\";");
         output_page($connect_page);
