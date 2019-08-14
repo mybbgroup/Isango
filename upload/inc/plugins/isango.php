@@ -5,7 +5,6 @@ if (!defined("IN_MYBB")) {
 }
 
 $plugins->add_hook('global_start', 'isango_buttons');
-$plugins->add_hook('error', 'isango_buttons_nopermit');
 $plugins->add_hook('member_login', 'isango_bridge');
 $plugins->add_hook('usercp_menu', 'isango_ucpnav', 25);
 $plugins->add_hook('usercp_start', 'isango_connections');
