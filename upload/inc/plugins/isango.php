@@ -527,13 +527,6 @@ function isango_buttons($return = false)
     }
 }
 
-function isango_buttons_nopermit(&$error)
-{
-    if (!empty($error) && strpos($error, 'value="do_login"') !== false) {
-        return $error . isango_buttons(true);
-    }
-}
-
 function isango_gateway_error(string $gateway)
 {
     global $lang;
