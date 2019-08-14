@@ -60,7 +60,7 @@ function isango_activate()
 
     $gid = (int) ($db->fetch_field($db->simple_select("settinggroups", "gid", "name='isango'"), "gid"));
     $isango_opts = array();
-    $disporder = 0;
+    $disporder = 1; // 0 is reserved for common settings
     $available_gates = array();
     $query = $db->simple_select("settings", "name, disporder", "name LIKE 'isango_%_enabled'");
     while ($entry = $db->fetch_array($query)) {
@@ -170,6 +170,23 @@ function isango_install()
         'isdefault' => '0',
     );
     $db->insert_query("settinggroups", $isango_group);
+    $gid = $db->insert_id();
+
+    // Commom settings
+    $isango_opts = array();
+    $isango_opts[] = array(
+        'name' => 'isango_default_gid',
+        'title' => $lang->isango_default_gid_title,
+        'description' => $lang->isango_default_gid_desc,
+        'optionscode' => 'groupselectsingle',
+        'value' => 2,
+        'disporder' => 0,
+        'gid' => intval($gid),
+    );
+
+    foreach ($isango_opts as $isango_opt) {
+        $db->insert_query("settings", $isango_opt);
+    }
 
     rebuild_settings();
 }
@@ -348,13 +365,24 @@ function isango_login($user, $gateway)
                 // Walla!!! got a name. Use it for new user registration
                 require_once MYBB_ROOT . "inc/datahandlers/user.php";
                 $userhandler = new UserDataHandler("insert");
+
+                global $cache;
+                $usergroups = array();
+                foreach ($cache->read('usergroups') as $group) {
+                    $usergroups[] = $group['gid'];
+                }
+                $gid = intval($mybb->settings['isango_default_gid']);
+                if (!in_array($gid, $usergroups)) {
+                    $gid = 2; // Reset to registered usergroup
+                }
+
                 // Set the data for the new user.
                 $userhandler->set_data(array(
                     "username" => $username,
                     "password" => base64_encode(random_bytes(10)) . 'aZ9', // Randpm pass, PHP 7+
                     "email" => $email,
                     "email2" => $email,
-                    "usergroup" => 2,
+                    "usergroup" => $gid,
                     "regip" => $session->packedip,
                     "registration" => true,
                 ));
