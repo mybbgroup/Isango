@@ -6,3 +6,5 @@ $l['isango_gateway_enabled_title'] = 'Enable Logging in with {1}?';
 $l['isango_gateway_enabled_desc'] = 'Allow users to Login / Register using {1} authentication API.';
 $l['isango_gateway_key_title'] = '{1} Client {2}:';
 $l['isango_gateway_key_desc'] = 'Enter your App {2} obtained from {1}';
+$l['isango_default_gid_title'] = 'Default Usergroup';
+$l['isango_default_gid_desc'] = 'Define a usergroup ID where users registered by Isango will be placed. (Fallback group is "Registered")';
