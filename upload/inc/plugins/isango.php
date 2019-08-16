@@ -586,8 +586,10 @@ function isango_config(string $gateway = "", string $mode = "")
 
 function isango_ucpnav()
 {
-    global $usercpmenu;
-    $usercpmenu = substr_replace($usercpmenu, '<tr><td class="trow1 smalltext"><a href="usercp.php?action=connections" class="usercp_nav_item usercp_nav_connections">Connections</a></td></tr></tbody>', strrpos($usercpmenu, '</tbody>'), strlen('</tbody>'));
+    global $usercpmenu, $templates, $lang;
+    $lang->load("isango");
+    eval("\$navitem = \"" . $templates->get("usercp_nav_connections") . "\";");
+    $usercpmenu = preg_replace('~(.*)' . preg_quote('</', '~') . '~su', '${1}'. $navitem .'</', $usercpmenu);
 }
 
 function isango_connections()
