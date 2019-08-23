@@ -298,7 +298,7 @@ function isango_login($user, $gateway)
 
     // Check verified status, if available
     if(isset($udata['vfd'])) {
-        if($udata['vfd']) {
+        if(!$udata['vfd']) {
             error($lang->isango_unverified_data, $lang->isango_unverified_title);
         } else {
             unset($udata['vfd']);
