@@ -296,6 +296,15 @@ function isango_login($user, $gateway)
     $errors = array();
     $udata = isango_fetchinfo($user, $gateway);
 
+    // Check verified status, if available
+    if(isset($udata['vfd'])) {
+        if(!$udata['vfd']) {
+            error($lang->isango_unverified_data, $lang->isango_unverified_title);
+        } else {
+            unset($udata['vfd']);
+        }
+    }
+
     foreach ($udata as $key => $val) {
         $udata[$key] = $val = filter_var($db->escape_string($val), FILTER_SANITIZE_STRING);
         if (empty($val) || ($val == "email" && !filter_var($val, FILTER_VALIDATE_EMAIL))) {

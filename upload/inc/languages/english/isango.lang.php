@@ -22,5 +22,7 @@ $l['isango_delete_button'] = "Delete Selected Connections";
 $l['isango_no_service'] = "No service is available for you to connect at this moment.";
 $l['isango_no_connection'] = "No connection detail is available for your account at this moment. You can add connections from below.";
 $l['isango_existing_connection'] = "The authentication you are trying to connect is already registered with some other account.";
+$l['isango_unverified_title'] = "Unverified User Data";
+$l['isango_unverified_data'] = "Returned data from the provider is not verified. Please pass verification of your account data at provider's end and try back.";
 $l['isango_invalid_data'] = "Service '{1}' failed to return acceptable {2}. Check your account settings or try different service gateway.";
 $l['isango_connect_error_title'] = "Authentication Connection Error!!!";
