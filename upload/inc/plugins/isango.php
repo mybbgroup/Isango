@@ -605,7 +605,6 @@ function isango_connections()
 {
     global $mybb, $lang, $header, $footer, $headerinclude, $templates, $theme, $usercpnav, $db;
     $lang->load('isango');
-    add_breadcrumb($lang->nav_usercp, "usercp.php");
 
     if ($mybb->input['action'] == "delete_connections" && $mybb->request_method == "post") {
         verify_post_check($mybb->get_input('my_post_key'));
@@ -619,7 +618,8 @@ function isango_connections()
     }
 
     if ($mybb->input['action'] == "connections") {
-        add_breadcrumb($lang->isango_nav_connections);
+    	add_breadcrumb($lang->nav_usercp, "usercp.php");
+    	add_breadcrumb($lang->isango_nav_connections);
         $connections = '';
         $query = $db->simple_select('isango', '*', 'uid="' . $mybb->user['uid'] . '"');
         while ($conn = $db->fetch_array($query)) {
