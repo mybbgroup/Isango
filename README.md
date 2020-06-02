@@ -22,5 +22,15 @@
 - Exactly same like any other plugins. Users need to upload the files inside `upload` folder of the package maintaining the already made structure using any FTP / WebDav and install / activate the plugin from ACP.
 - Users need to create App for the website at the service provider's developer site to obtain App ID / Secret which are required to input through MyBB ACP Plugin settings. For detail guidelines on creating App for individual service providers please refer [Wiki](https://github.com/mybbgroup/isango/wiki).
 
+The callback url for all gateways is:
+`http(s)://{$your_site}/member.php?action=login&gateway={$gateway}`
+
+For example, if your site is `forums.com` and you are making app for google, the redirect url you have to set is:
+`https://forums.com/member.php?action=login&gateway=google`
+
+For those providers who don't allow fragmented callback url, just set:
+`https://forums.com/member.php`
+...and it will all work good.
+
 ## External Dependency:
 No external OAuth library has been used in this plugin. It has been implemented complying minimum possible OAuth2 requirements.
