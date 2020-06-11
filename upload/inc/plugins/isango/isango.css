@@ -131,6 +131,20 @@ a.button.isango_facebook:hover {
   background: #34518d;
 }
 
+a.button.isango_yahoo {
+  background: #5d0bed;
+  border: 1px solid #4a09bc;
+  min-width: 100px;
+}
+
+a.button.isango_yahoo span:before {
+  content: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24px' height='24px' fill='white'><path d='M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm4 5.5h3l-2.5 6h-3l2.5-6zM5 7.9h2.8L9.5 12l1.7-4.1H14L9.5 18.5H6.7l1.4-3.3L5 7.9zm9.1 4.7c.9 0 1.6.7 1.6 1.6-.1.9-.8 1.6-1.6 1.6-.9 0-1.6-.7-1.6-1.6 0-.9.7-1.6 1.6-1.6z' /></svg>");
+}
+
+a.button.isango_yahoo:hover {
+  background: #4a09bc;
+}
+
 .usercp_nav_item.usercp_nav_connections {
   background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAh1JREFUeNqckz1rVEEUhs/sRlYMEXRDQgolKKiI1RpiozYRBAtdxDKNKIiCEBU/kmqJEFDShFQ2oohKREURBAXzA0SJWBgiksLg+rWLF0l2537MjM+4ZpNwUznw8M7cOec9Z+69o5xz4sfR2ROybGSduONW7GkjpgumEkluxhI/0aINz+X1lhd/A1skPTKwl6AyiWcgT/IOGOTZSfaOQLQY3DTwnSil/HQ/SeegBzpI/AFvmF9DC5gM0V1pebWGgXWe3sQlt6EMZ2GfV+OMX49CFRJtdGuqg7hGV1k1SKVh26hcYr4ZPjO/D8NwhfVl/5yU6ZUG9WgTPcyyuRH6Cb6OfoRtzC+ht9Bn6DGOMZA6gg70bh3UJ6EII2Ggd8Hjf+rXxSgIX8VBuBNVqSPUKwudTuxbI7aDCh+odBUOwQOY4FjtqP8yrVZckjb4viAYdJN8D5O76B2Ct6Kf0A3oN0wi9CcGOm1Qnn/PRgmTG+hTTLqdmFMkPGLdiz6HAu9p2uVcLWVQm5ufYvMhwf1oF8Ff/RrDKlpkfQEdYn/Cf/WUQVjR2obmF0HjUIF22AOHiT6P9oGotsxLlWu+wyUD/YWurJtxxo2QkKcIZjKJXkT70AOSlQGpLP3GfqjFy7Rue5u42EpcjdbzR3b6CwUFOCj+rWdUKZPPzqk1jerRjF79MpH822nLH+uoKjkYUy3qnVrLFVxlNDv43/FHgAEAe3mcL7UMjX0AAAAASUVORK5CYII=");
 }
