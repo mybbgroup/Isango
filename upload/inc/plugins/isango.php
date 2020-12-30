@@ -19,7 +19,7 @@ function isango_info()
         'website' => 'https://github.com/mybbgroup/Isango',
         'author' => 'effone</a> of <a href="https://mybb.group">MyBBGroup</a>',
         'authorsite' => 'https://eff.one',
-        'version' => '1.0.0',
+        'version' => '1.2.0',
         'compatibility' => '18*',
         'codename' => 'isango',
     );
