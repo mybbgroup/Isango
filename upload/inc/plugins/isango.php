@@ -374,7 +374,7 @@ function isango_login($user, $gateway)
                 require_once MYBB_ROOT . "inc/datahandlers/user.php";
                 $userhandler = new UserDataHandler("insert");
 
-                global $cache;
+                global $session, $cache;
                 $usergroups = array();
                 foreach ($cache->read('usergroups') as $group) {
                     $usergroups[] = $group['gid'];
@@ -524,7 +524,7 @@ function isango_buttons($return = false)
     $isango_buttons = "";
     foreach (isango_config() as $gateway) {
         if (!isango_gateway_error($gateway)) {
-            $isango_buttons .= '<a class="button isango_' . $gateway . '" href="member.php?action=login&gateway=' . $gateway . '"><span>' . ucfirst($gateway) . '</span></a>';
+            $isango_buttons .= '<a class="isango_button isango_' . $gateway . '" href="member.php?action=login&gateway=' . $gateway . '"><span>' . ucfirst($gateway) . '</span></a>';
         }
     }
     if (!empty($isango_buttons)) {
