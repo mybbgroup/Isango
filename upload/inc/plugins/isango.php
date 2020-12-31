@@ -60,19 +60,33 @@ function isango_activate()
 
     $gid = (int) ($db->fetch_field($db->simple_select("settinggroups", "gid", "name='isango'"), "gid"));
     $isango_opts = array();
-    $disporder = 1; // 0 is reserved for common settings
+    $query = $db->simple_select("settings", "COUNT(sid) as general", "name LIKE 'isango_%' AND name NOT LIKE 'isango_%\\_enabled' AND name NOT LIKE 'isango_%\\_id' AND name NOT LIKE 'isango_%\\_secret'");
+    $disporder = $db->fetch_field($query, 'general') - 1;
+
     $available_gates = array();
     $query = $db->simple_select("settings", "name, disporder", "name LIKE 'isango_%_enabled'");
     while ($entry = $db->fetch_array($query)) {
         $gate = explode('_', $entry['name']);
         $available_gates[] = $gate[1];
-        if ((int) $entry['disporder'] > $disporder) {
-            $disporder = (int) $entry['disporder'] + 2;
-        }
     }
     $supported_gates = isango_config();
     $required_gates = array_diff($supported_gates, $available_gates);
     $dropable_gates = array_diff($available_gates, $supported_gates);
+    $remaining_gates = array_diff($available_gates, $dropable_gates);
+
+    foreach ($dropable_gates as $gate) {
+        $db->delete_query("settings", "name LIKE '%isango_{$gate}%'");
+    }
+
+    if (count($dropable_gates)) {
+        foreach($remaining_gates as $gate){
+            foreach(['enabled','id','secret'] as $prop){
+                $db->update_query('settings', ['disporder' => ++$disporder], "name='isango_".$gate."_".$prop."'");
+            }
+        }
+    } else {
+        $disporder = $disporder + (count($remaining_gates) * 3);
+    }
 
     foreach ($required_gates as $gateway) {
         $isango_opts[] = array(
@@ -102,10 +116,6 @@ function isango_activate()
         $db->insert_query("settings", $isango_opt);
     }
 
-    foreach ($dropable_gates as $gate) {
-        $db->delete_query("settings", "name LIKE '%isango_{$gate}%'");
-    }
-
     rebuild_settings();
 
     require MYBB_ROOT . "inc/adminfunctions_templates.php";
@@ -121,7 +131,6 @@ function isango_deactivate()
         if (stripos($file, 'isango') !== false) {
             @unlink($file);
         }
-
     }
     $db->delete_query('themestylesheets', "name='isango.css'");
     require_once MYBB_ADMIN_DIR . "inc/functions_themes.php";
@@ -183,6 +192,7 @@ function isango_install()
         'disporder' => 0,
         'gid' => intval($gid),
     );
+
     foreach ($isango_opts as $isango_opt) {
         $db->insert_query("settings", $isango_opt);
     }
@@ -220,7 +230,6 @@ function isango_settingspeekers(&$peekers)
         foreach (array('ID', 'Secret') as $key) {
             $peekers[] = 'new Peeker($(".setting_isango_' . $gateway . '_enabled"), $("#row_setting_isango_' . $gateway . '_' . strtolower($key) . '"),/1/,true)';
         }
-
     }
 }
 
@@ -251,7 +260,6 @@ function isango_bridge()
                         $response = isango_curl($params, $mybb->input['gateway']);
                         $user = array_merge($user, $response);
                     }
-
                 } catch (Exception $e) {
                     $errors = $e->getMessage();
                 }
@@ -259,12 +267,10 @@ function isango_bridge()
                 if (empty($errors)) {
                     $errors = !empty($user) ? isango_login($user, $mybb->input['gateway']) : $lang->no_user_data;
                 }
-
             } else {
                 my_unsetcookie('isango_state');
                 $errors = $lang->auth_state_mismatch;
             }
-
         } else { // Initialization call by the user
             $gateway = strtolower($mybb->get_input('gateway'));
             $errors = isango_gateway_error($gateway);
