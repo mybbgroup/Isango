@@ -10,6 +10,7 @@ $plugins->add_hook('member_login', 'isango_bridge');
 $plugins->add_hook('usercp_menu', 'isango_ucpnav', 25);
 $plugins->add_hook('usercp_start', 'isango_connections');
 $plugins->add_hook('admin_settings_print_peekers', 'isango_settingspeekers');
+$plugins->add_hook('datahandler_user_delete_end', 'isango_purgeconnections');
 
 function isango_info()
 {
@@ -641,4 +642,10 @@ function isango_connections()
         eval("\$connect_page = \"" . $templates->get("usercp_connections") . "\";");
         output_page($connect_page);
     }
+}
+
+function isango_purgeconnections(&$users)
+{
+    global $db;
+    $db->delete_query('isango', "uid IN({$users->delete_uids})");
 }
