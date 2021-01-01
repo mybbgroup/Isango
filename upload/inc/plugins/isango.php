@@ -222,6 +222,12 @@ function isango_bridge()
 
                     // Get user information
                     $user = array();
+
+                    // Hack the email from the flow, if available. Vkontakte doesn't provide email at API endpoint
+                    if($mybb->input['gateway'] == 'vkontakte' && isset($data["email"])){
+                        $user["email"] = $data["email"];
+                    }
+
                     $conf = isango_config($mybb->input['gateway'], 'api');
                     if (is_string($conf['url'])) {
                         $conf['url'] = (array) $conf['url'];
@@ -475,6 +481,9 @@ function isango_curl(array $params, string $gateway, string $mode = 'api')
     $header = array('Accept' => 'application/json'); // Default, override with config
     if ($mode == 'api') {
         $header['Authorization'] = 'Bearer ' . $params['code'];
+        if($gateway == 'vkontakte'){ // Header will not help carrying the access token for Vkontakte
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['access_token' => $params['code'], 'v' => '5.110']));
+        }
     }
 
     if (isset($conf['header']) && is_array($conf['header'])) {
