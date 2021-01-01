@@ -184,6 +184,17 @@ function isango_install()
         'disporder' => 0,
         'gid' => intval($gid),
     );
+
+    $isango_opts[] = array(
+        'name' => 'isango_allow_register',
+        'title' => $lang->isango_allow_register_title,
+        'description' => $lang->isango_allow_register_desc,
+        'optionscode' => 'onoff',
+        'value' => '1',
+        'disporder' => 1,
+        'gid' => intval($gid),
+    );
+
     foreach ($isango_opts as $isango_opt) {
         $db->insert_query("settings", $isango_opt);
     }
@@ -345,61 +356,65 @@ function isango_login($user, $gateway)
 
     if (!$logged_in) {
         if (!$user_info) { // User not found, need to register a fresh account
-            // Accumulate all possible usernames based on available data
-            $possible_usernames = array();
-            $temp1 = explode('@', $email);
-            $possible_usernames[] = isango_purename($temp1[0]);
-            $temp2 = explode(' ', $name);
-            $possible_usernames[] = isango_purename($temp2[0]);
-            $possible_usernames[] = isango_purename($temp1[0] . '@' . $gateway);
-            if (count($temp2) > 1) {
-                $possible_usernames[] = isango_purename(implode('_', $temp2));
-            }
-            $possible_usernames = array_values(array_filter($possible_usernames));
+            if($mybb->settings['isango_allow_register']) {
+                // Accumulate all possible usernames based on available data
+                $possible_usernames = array();
+                $temp1 = explode('@', $email);
+                $possible_usernames[] = isango_purename($temp1[0]);
+                $temp2 = explode(' ', $name);
+                $possible_usernames[] = isango_purename($temp2[0]);
+                $possible_usernames[] = isango_purename($temp1[0] . '@' . $gateway);
+                if (count($temp2) > 1) {
+                    $possible_usernames[] = isango_purename(implode('_', $temp2));
+                }
+                $possible_usernames = array_values(array_filter($possible_usernames));
 
-            $i = 0;
-            do {
-                $username = $possible_usernames[$i++];
-                if (get_user_by_username(trim($username), ['exists' => true])) {
-                    $username = '';
+                $i = 0;
+                do {
+                    $username = $possible_usernames[$i++];
+                    if (get_user_by_username(trim($username), ['exists' => true])) {
+                        $username = '';
+                    } else {
+                        $i = count($possible_usernames);
+                    }
+                } while ($i < count($possible_usernames));
+
+                if (empty($username)) {
+                    // Loop over, we don't have a username to use, OMG!
+                    return $lang->undetermined_username; // Improve the situation!!!!!!!
                 } else {
-                    $i = count($possible_usernames);
-                }
-            } while ($i < count($possible_usernames));
+                    // Walla!!! got a name. Use it for new user registration
+                    require_once MYBB_ROOT . "inc/datahandlers/user.php";
+                    $userhandler = new UserDataHandler("insert");
 
-            if (empty($username)) {
-                // Loop over, we don't have a username to use, OMG!
-                return $lang->undetermined_username; // Improve the situation!!!!!!!
+                    global $session, $cache;
+                    $usergroups = array();
+                    foreach ($cache->read('usergroups') as $group) {
+                        $usergroups[] = $group['gid'];
+                    }
+                    $gid = intval($mybb->settings['isango_default_gid']);
+                    if (!in_array($gid, $usergroups)) {
+                        $gid = 2; // Reset to registered usergroup
+                    }
+
+                    // Set the data for the new user.
+                    $userhandler->set_data(array(
+                        "username" => $username,
+                        "password" => base64_encode(random_bytes(10)) . 'aZ9', // Randpm pass, PHP 7+
+                        "email" => $email,
+                        "email2" => $email,
+                        "usergroup" => $gid,
+                        "regip" => $session->packedip,
+                        "registration" => true,
+                    ));
+                    if (!$userhandler->validate_user()) {
+                        return $userhandler->get_friendly_errors();
+                    }
+                }
+                $user_info = $userhandler->insert_user();
             } else {
-                // Walla!!! got a name. Use it for new user registration
-                require_once MYBB_ROOT . "inc/datahandlers/user.php";
-                $userhandler = new UserDataHandler("insert");
-
-                global $session, $cache;
-                $usergroups = array();
-                foreach ($cache->read('usergroups') as $group) {
-                    $usergroups[] = $group['gid'];
-                }
-                $gid = intval($mybb->settings['isango_default_gid']);
-                if (!in_array($gid, $usergroups)) {
-                    $gid = 2; // Reset to registered usergroup
-                }
-
-                // Set the data for the new user.
-                $userhandler->set_data(array(
-                    "username" => $username,
-                    "password" => base64_encode(random_bytes(10)) . 'aZ9', // Randpm pass, PHP 7+
-                    "email" => $email,
-                    "email2" => $email,
-                    "usergroup" => $gid,
-                    "regip" => $session->packedip,
-                    "registration" => true,
-                ));
-                if (!$userhandler->validate_user()) {
-                    return $userhandler->get_friendly_errors();
-                }
+                error($lang->isango_registration_restricted, $lang->isango_regrestrict_title);
             }
-            $user_info = $userhandler->insert_user();
         }
 
         $redirect_url = 'index.php';
