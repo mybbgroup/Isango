@@ -381,13 +381,13 @@ function isango_login($user, $gateway)
             } else {
                 error($lang->isango_registration_restricted, $lang->isango_regrestrict_title);
             }
-
-            $redirect_url = 'index.php';
-            $redirect_message = $lang->sprintf($lang->auth_success_registered_redirect, ucfirst($gateway));
-
-            // We have the user with us, let's log the user in
-            my_setcookie("mybbuser", $user_info['uid'] . "_" . $user_info['loginkey'], null, true, "lax");
         }
+
+        $redirect_url = 'index.php';
+        $redirect_message = $lang->sprintf($lang->auth_success_registered_redirect, ucfirst($gateway));
+
+        // We have the user with us, let's log the user in
+        my_setcookie("mybbuser", $user_info['uid'] . "_" . $user_info['loginkey'], null, true, "lax");
     } else { // User already logged in
         $redirect_url = 'usercp.php?action=connections';
         if ($connected) {
