@@ -24,5 +24,7 @@ $l['isango_no_connection'] = "No connection detail is available for your account
 $l['isango_existing_connection'] = "The authentication you are trying to connect is already registered with some other account.";
 $l['isango_unverified_title'] = "Unverified User Data";
 $l['isango_unverified_data'] = "Returned data from the provider is not verified. Please pass verification of your account data at provider's end and try back.";
+$l['isango_regrestrict_title'] = "New Registration Restricted";
+$l['isango_registration_restricted'] = "Sorry, obtained data doesn't match with any existing account and the administrator decided not to allow fresh account creation using third party authentication service.";
 $l['isango_invalid_data'] = "Service '{1}' failed to return acceptable {2}. Check your account settings or try different service gateway.";
 $l['isango_connect_error_title'] = "Authentication Connection Error!!!";
