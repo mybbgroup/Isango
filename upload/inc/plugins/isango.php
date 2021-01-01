@@ -61,19 +61,31 @@ function isango_activate()
 
     $gid = (int) ($db->fetch_field($db->simple_select("settinggroups", "gid", "name='isango'"), "gid"));
     $isango_opts = array();
-    $disporder = 1; // 0 is reserved for common settings
+
+    $disporder = isango_checksettings($gid) - 1;
+
     $available_gates = array();
-    $query = $db->simple_select("settings", "name, disporder", "name LIKE 'isango_%_enabled'");
+    $query = $db->simple_select("settings", "name", "name LIKE 'isango_%_enabled'");
+
     while ($entry = $db->fetch_array($query)) {
         $gate = explode('_', $entry['name']);
         $available_gates[] = $gate[1];
-        if ((int) $entry['disporder'] > $disporder) {
-            $disporder = (int) $entry['disporder'] + 2;
-        }
     }
+
     $supported_gates = isango_config();
     $required_gates = array_diff($supported_gates, $available_gates);
     $dropable_gates = array_diff($available_gates, $supported_gates);
+    $remaining_gates = array_diff($available_gates, $dropable_gates);
+
+    foreach ($dropable_gates as $gate) {
+        $db->delete_query("settings", "name LIKE '%isango_{$gate}%'");
+    }
+
+    foreach ($remaining_gates as $gate) {
+        foreach (['enabled', 'id', 'secret'] as $prop) {
+            $db->update_query('settings', ['disporder' => ++$disporder], "name='isango_" . $gate . "_" . $prop . "'");
+        }
+    }
 
     foreach ($required_gates as $gateway) {
         $isango_opts[] = array(
@@ -81,7 +93,7 @@ function isango_activate()
             'title' => $lang->sprintf($lang->isango_gateway_enabled_title, ucfirst($gateway)),
             'description' => $lang->sprintf($lang->isango_gateway_enabled_desc, ucfirst($gateway)),
             'optionscode' => 'onoff',
-            'value' => '',
+            'value' => '0',
             'disporder' => ++$disporder,
             'gid' => intval($gid),
         );
@@ -103,10 +115,6 @@ function isango_activate()
         $db->insert_query("settings", $isango_opt);
     }
 
-    foreach ($dropable_gates as $gate) {
-        $db->delete_query("settings", "name LIKE '%isango_{$gate}%'");
-    }
-
     rebuild_settings();
 
     require MYBB_ROOT . "inc/adminfunctions_templates.php";
@@ -122,7 +130,6 @@ function isango_deactivate()
         if (stripos($file, 'isango') !== false) {
             @unlink($file);
         }
-
     }
     $db->delete_query('themestylesheets', "name='isango.css'");
     require_once MYBB_ADMIN_DIR . "inc/functions_themes.php";
@@ -136,8 +143,7 @@ function isango_deactivate()
 
 function isango_install()
 {
-    global $db, $lang;
-    $lang->load('isango');
+    global $db;
 
     // Install Isango templates
     foreach (glob(MYBB_ROOT . 'inc/plugins/isango/*.htm') as $template) {
@@ -160,46 +166,10 @@ function isango_install()
 		dateline int(10) UNSIGNED NOT NULL,
 		PRIMARY KEY (`cid`),
 		INDEX (`cuid`, `uid`)
-		);"
+        );"
     );
 
-    $isango_group = array(
-        'name' => 'isango',
-        'title' => $lang->isango_title,
-        'description' => $lang->isango_description,
-        'disporder' => '3',
-        'isdefault' => '0',
-    );
-    $db->insert_query("settinggroups", $isango_group);
-    $gid = $db->insert_id();
-
-    // Commom settings
-    $isango_opts = array();
-    $isango_opts[] = array(
-        'name' => 'isango_default_gid',
-        'title' => $lang->isango_default_gid_title,
-        'description' => $lang->isango_default_gid_desc,
-        'optionscode' => 'groupselectsingle',
-        'value' => 2,
-        'disporder' => 0,
-        'gid' => intval($gid),
-    );
-
-    $isango_opts[] = array(
-        'name' => 'isango_allow_register',
-        'title' => $lang->isango_allow_register_title,
-        'description' => $lang->isango_allow_register_desc,
-        'optionscode' => 'onoff',
-        'value' => '1',
-        'disporder' => 1,
-        'gid' => intval($gid),
-    );
-
-    foreach ($isango_opts as $isango_opt) {
-        $db->insert_query("settings", $isango_opt);
-    }
-
-    rebuild_settings();
+    isango_checksettings();
 }
 
 function isango_is_installed()
@@ -232,7 +202,6 @@ function isango_settingspeekers(&$peekers)
         foreach (array('ID', 'Secret') as $key) {
             $peekers[] = 'new Peeker($(".setting_isango_' . $gateway . '_enabled"), $("#row_setting_isango_' . $gateway . '_' . strtolower($key) . '"),/1/,true)';
         }
-
     }
 }
 
@@ -263,7 +232,6 @@ function isango_bridge()
                         $response = isango_curl($params, $mybb->input['gateway']);
                         $user = array_merge($user, $response);
                     }
-
                 } catch (Exception $e) {
                     $errors = $e->getMessage();
                 }
@@ -271,12 +239,10 @@ function isango_bridge()
                 if (empty($errors)) {
                     $errors = !empty($user) ? isango_login($user, $mybb->input['gateway']) : $lang->no_user_data;
                 }
-
             } else {
                 my_unsetcookie('isango_state');
                 $errors = $lang->auth_state_mismatch;
             }
-
         } else { // Initialization call by the user
             $gateway = strtolower($mybb->get_input('gateway'));
             $errors = isango_gateway_error($gateway);
@@ -309,8 +275,8 @@ function isango_login($user, $gateway)
     $udata = isango_fetchinfo($user, $gateway);
 
     // Check verified status, if available
-    if(isset($udata['vfd'])) {
-        if(!$udata['vfd']) {
+    if (isset($udata['vfd'])) {
+        if (!$udata['vfd']) {
             error($lang->isango_unverified_data, $lang->isango_unverified_title);
         } else {
             unset($udata['vfd']);
@@ -356,7 +322,7 @@ function isango_login($user, $gateway)
 
     if (!$logged_in) {
         if (!$user_info) { // User not found, need to register a fresh account
-            if($mybb->settings['isango_allow_register']) {
+            if ($mybb->settings['isango_allow_register']) {
                 // Accumulate all possible usernames based on available data
                 $possible_usernames = array();
                 $temp1 = explode('@', $email);
@@ -415,13 +381,13 @@ function isango_login($user, $gateway)
             } else {
                 error($lang->isango_registration_restricted, $lang->isango_regrestrict_title);
             }
+
+            $redirect_url = 'index.php';
+            $redirect_message = $lang->sprintf($lang->auth_success_registered_redirect, ucfirst($gateway));
+
+            // We have the user with us, let's log the user in
+            my_setcookie("mybbuser", $user_info['uid'] . "_" . $user_info['loginkey'], null, true, "lax");
         }
-
-        $redirect_url = 'index.php';
-        $redirect_message = $lang->sprintf($lang->auth_success_registered_redirect, ucfirst($gateway));
-
-        // We have the user with us, let's log the user in
-        my_setcookie("mybbuser", $user_info['uid'] . "_" . $user_info['loginkey'], null, true, "lax");
     } else { // User already logged in
         $redirect_url = 'usercp.php?action=connections';
         if ($connected) {
@@ -614,7 +580,7 @@ function isango_ucpnav()
     global $usercpmenu, $templates, $lang;
     $lang->load("isango");
     eval("\$navitem = \"" . $templates->get("usercp_nav_connections") . "\";");
-    $usercpmenu = preg_replace('~(.*)' . preg_quote('</', '~') . '~su', '${1}'. $navitem .'</', $usercpmenu);
+    $usercpmenu = preg_replace('~(.*)' . preg_quote('</', '~') . '~su', '${1}' . $navitem . '</', $usercpmenu);
 }
 
 function isango_connections()
@@ -634,8 +600,8 @@ function isango_connections()
     }
 
     if ($mybb->input['action'] == "connections") {
-    	add_breadcrumb($lang->nav_usercp, "usercp.php");
-    	add_breadcrumb($lang->isango_nav_connections);
+        add_breadcrumb($lang->nav_usercp, "usercp.php");
+        add_breadcrumb($lang->isango_nav_connections);
         $connections = '';
         $query = $db->simple_select('isango', '*', 'uid="' . $mybb->user['uid'] . '"');
         while ($conn = $db->fetch_array($query)) {
@@ -663,4 +629,69 @@ function isango_purgeconnections(&$users)
 {
     global $db;
     $db->delete_query('isango', "uid IN({$users->delete_uids})");
+}
+
+function isango_checksettings($gid = 0)
+{
+    global $db, $lang;
+    $lang->load('isango');
+    $rebuild = $count = 0;
+
+    if (!$gid) { // Fresh installation
+        $rebuild = 1;
+        $isango_group = array(
+            'name' => 'isango',
+            'title' => $lang->isango_title,
+            'description' => $lang->isango_description,
+            'disporder' => '3',
+            'isdefault' => '0',
+        );
+        $db->insert_query("settinggroups", $isango_group);
+        $gid = $db->insert_id();
+    }
+
+    // Commom settings
+    $isango_opts = array();
+
+    $isango_opts[] = array(
+        'name' => 'isango_default_gid',
+        'title' => $lang->isango_default_gid_title,
+        'description' => $lang->isango_default_gid_desc,
+        'optionscode' => 'groupselectsingle',
+        'value' => 2,
+        'disporder' => 0,
+        'gid' => intval($gid),
+    );
+
+    $isango_opts[] = array(
+        'name' => 'isango_allow_register',
+        'title' => $lang->isango_allow_register_title,
+        'description' => $lang->isango_allow_register_desc,
+        'optionscode' => 'onoff',
+        'value' => '1',
+        'disporder' => 1,
+        'gid' => intval($gid),
+    );
+
+    if (!$rebuild) {
+        $query = $db->simple_select("settings", "name", "name LIKE 'isango_%' AND name NOT LIKE 'isango_%\\_enabled' AND name NOT LIKE 'isango_%\\_id' AND name NOT LIKE 'isango_%\\_secret'");
+
+        while ($existing_settings = $db->fetch_array($query)) {
+            $count++;
+            foreach ($isango_opts as $key => $val) {
+                if ($val['name'] == $existing_settings["name"]) unset($isango_opts[$key]);
+            }
+        }
+    }
+
+    if (!empty($isango_opts)) {
+        $rebuild = 1;
+        foreach ($isango_opts as $isango_opt) {
+            $count++;
+            $db->insert_query("settings", $isango_opt);
+        }
+    }
+
+    if ($rebuild) rebuild_settings();
+    return $count;
 }
