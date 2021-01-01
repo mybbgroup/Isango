@@ -10,3 +10,5 @@ $l['isango_default_gid_title'] = 'Default Usergroup';
 $l['isango_default_gid_desc'] = 'Define a usergroup ID where users registered by Isango will be placed. (Fallback group is "Registered")';
 $l['isango_allow_register_title'] = 'Allow Registration';
 $l['isango_allow_register_desc'] = 'Allowing this will auto create new account if the data does not match with existing user.';
+$l['isango_notify_registered_title'] = 'Notify New User';
+$l['isango_notify_registered_desc'] = 'Send a PM to newly registered user with the random password used to create account.';

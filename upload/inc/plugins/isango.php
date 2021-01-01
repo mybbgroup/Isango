@@ -198,6 +198,7 @@ function isango_uninstall()
 
 function isango_settingspeekers(&$peekers)
 {
+    $peekers[] = 'new Peeker($(".setting_isango_allow_register"), $("#row_setting_isango_notify_registered, #row_setting_isango_default_gid"),/1/,true)';
     foreach (isango_config() as $gateway) {
         foreach (array('ID', 'Secret') as $key) {
             $peekers[] = 'new Peeker($(".setting_isango_' . $gateway . '_enabled"), $("#row_setting_isango_' . $gateway . '_' . strtolower($key) . '"),/1/,true)';
@@ -347,7 +348,7 @@ function isango_login($user, $gateway)
 
                 if (empty($username)) {
                     // Loop over, we don't have a username to use, OMG!
-                    return $lang->undetermined_username; // Improve the situation!!!!!!!
+                    error($lang->undetermined_username); // Improve the situation!!!!!!!
                 } else {
                     // Walla!!! got a name. Use it for new user registration
                     require_once MYBB_ROOT . "inc/datahandlers/user.php";
@@ -363,10 +364,11 @@ function isango_login($user, $gateway)
                         $gid = 2; // Reset to registered usergroup
                     }
 
+                    $password = base64_encode(random_bytes(10)) . 'aZ9'; // Randpm pass, PHP 7+
                     // Set the data for the new user.
                     $userhandler->set_data(array(
                         "username" => $username,
-                        "password" => base64_encode(random_bytes(10)) . 'aZ9', // Randpm pass, PHP 7+
+                        "password" => $password,
                         "email" => $email,
                         "email2" => $email,
                         "usergroup" => $gid,
@@ -378,6 +380,26 @@ function isango_login($user, $gateway)
                     }
                 }
                 $user_info = $userhandler->insert_user();
+
+                if ($mybb->settings['isango_notify_registered']) {
+                    include_once MYBB_ROOT . 'inc/datahandlers/pm.php';
+                    $pmhandler = new PMDataHandler();
+                    $pmhandler->admin_override = true;
+                    $pm = array(
+                        'subject' => $lang->sprintf($lang->isango_pmnotify_subject, $mybb->settings['bbname']),
+                        'message' => $lang->sprintf($lang->isango_pmnotify_matter, $username, ucfirst($gateway), $password, $mybb->settings['bbname']),
+                        'fromid' => '1',
+                        'toid' => array($user_info['uid']),
+                        'do' => '',
+                        'pmid' => '',
+                        'options' => array('signature' => '0', 'disablesmilies' => '0', 'savecopy' => '0', 'readreceipt' => '0'),
+                    );
+                    $pmhandler->set_data($pm);
+
+                    if ($pmhandler->validate_pm()) {
+                        $pmhandler->insert_pm();
+                    }
+                }
             } else {
                 error($lang->isango_registration_restricted, $lang->isango_regrestrict_title);
             }
@@ -654,22 +676,32 @@ function isango_checksettings($gid = 0)
     $isango_opts = array();
 
     $isango_opts[] = array(
-        'name' => 'isango_default_gid',
-        'title' => $lang->isango_default_gid_title,
-        'description' => $lang->isango_default_gid_desc,
-        'optionscode' => 'groupselectsingle',
-        'value' => 2,
-        'disporder' => 0,
-        'gid' => intval($gid),
-    );
-
-    $isango_opts[] = array(
         'name' => 'isango_allow_register',
         'title' => $lang->isango_allow_register_title,
         'description' => $lang->isango_allow_register_desc,
         'optionscode' => 'onoff',
         'value' => '1',
+        'disporder' => 0,
+        'gid' => intval($gid),
+    );
+
+    $isango_opts[] = array(
+        'name' => 'isango_notify_registered',
+        'title' => $lang->isango_notify_registered_title,
+        'description' => $lang->isango_notify_registered_desc,
+        'optionscode' => 'onoff',
+        'value' => '0',
         'disporder' => 1,
+        'gid' => intval($gid),
+    );
+
+    $isango_opts[] = array(
+        'name' => 'isango_default_gid',
+        'title' => $lang->isango_default_gid_title,
+        'description' => $lang->isango_default_gid_desc,
+        'optionscode' => 'groupselectsingle',
+        'value' => 2,
+        'disporder' => 2,
         'gid' => intval($gid),
     );
 
@@ -679,7 +711,10 @@ function isango_checksettings($gid = 0)
         while ($existing_settings = $db->fetch_array($query)) {
             $count++;
             foreach ($isango_opts as $key => $val) {
-                if ($val['name'] == $existing_settings["name"]) unset($isango_opts[$key]);
+                if ($val['name'] == $existing_settings["name"]) {
+                    $db->update_query('settings', ['disporder' => $val['disporder']], "name='" . $val['name'] . "'");
+                    unset($isango_opts[$key]);
+                }
             }
         }
     }
