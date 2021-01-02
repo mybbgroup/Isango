@@ -28,5 +28,6 @@ $l['isango_regrestrict_title'] = "New Registration Restricted";
 $l['isango_registration_restricted'] = "Sorry, obtained data doesn't match with any existing account and the administrator decided not to allow fresh account creation using third party authentication service.";
 $l['isango_invalid_data'] = "Service '{1}' failed to return acceptable {2}. Check your account settings or try different service gateway.";
 $l['isango_connect_error_title'] = "Authentication Connection Error!!!";
+$l['isango_single_connection_error'] = "You already have a connection established using {1} gateyay. You can add only one connection per service.";
 $l['isango_pmnotify_subject'] = "Welcome to {1}";
 $l['isango_pmnotify_matter'] = "Welcome {1},\r\n\r\nYour new account has been created by {2} authintation using the following random password:\r\n\r\n{3}\r\n\r\nHowever we encourage you to change the password immediately for security reasons.\r\n\r\nHave a pleasant stay.\r\n\r\nWishes,\r\n- {4} Team";
