@@ -61,7 +61,6 @@ function isango_activate()
 
     $gid = (int) ($db->fetch_field($db->simple_select("settinggroups", "gid", "name='isango'"), "gid"));
     $isango_opts = array();
-
     $disporder = isango_checksettings($gid) - 1;
 
     $available_gates = array();
@@ -210,7 +209,6 @@ function isango_bridge()
 {
     global $mybb, $errors;
     if (isset($mybb->input['gateway'])) { // oAuth call
-
         if (isset($mybb->input['code']) && isset($mybb->input['state'])) { // Verification return call from the gateway
             global $lang;
             $lang->load('isango');
@@ -246,6 +244,14 @@ function isango_bridge()
             }
         } else { // Initialization call by the user
             $gateway = strtolower($mybb->get_input('gateway'));
+
+            if($mybb->user['uid'] && $mybb->settings['isango_single_connection']) { // UCP Connection add request. Validate
+                global $db, $lang;
+	            if($db->fetch_field($db->simple_select("isango", "COUNT(cid) AS conn", "gateway='".$gateway."' AND uid='".$mybb->user['uid']."'"), "conn")){
+                    error($lang->sprintf($lang->isango_single_connection_error, ucwords($gateway)));
+                }
+            }
+
             $errors = isango_gateway_error($gateway);
 
             if (!$errors) {
@@ -522,18 +528,30 @@ function isango_curl(array $params, string $gateway, string $mode = 'api')
     return $data;
 }
 
-function isango_buttons($return = false)
+function isango_buttons($return = false, $skip = array())
 {
-    global $isango_buttons;
+    global $mybb, $isango_buttons;
     $isango_buttons = "";
+
+    // Detect and skip for single connection
+    if($mybb->user['uid'] && $mybb->settings['isango_single_connection']) {
+        global $db;
+        $query = $db->simple_select('isango', 'gateway', "uid='".$mybb->user['uid']."'");
+        while($service = $db->fetch_array($query)) {
+            $skip[] = $service['gateway'];
+        }
+    }
+
     foreach (isango_config() as $gateway) {
-        if (!isango_gateway_error($gateway)) {
+        if (!in_array($gateway, $skip) && !isango_gateway_error($gateway)) {
             $isango_buttons .= '<a class="isango_button isango_' . $gateway . '" href="member.php?action=login&gateway=' . $gateway . '"><span>' . ucfirst($gateway) . '</span></a>';
         }
     }
+
     if (!empty($isango_buttons)) {
         $isango_buttons = "<div style='text-align: center; margin-top: 10px;'>" . $isango_buttons . "</div>";
     }
+
     if ($return) {
         return $isango_buttons;
     }
@@ -702,6 +720,16 @@ function isango_checksettings($gid = 0)
         'optionscode' => 'groupselectsingle',
         'value' => 2,
         'disporder' => 2,
+        'gid' => intval($gid),
+    );
+
+    $isango_opts[] = array(
+        'name' => 'isango_single_connection',
+        'title' => $lang->isango_single_connection_title,
+        'description' => $lang->isango_single_connection_desc,
+        'optionscode' => 'onoff',
+        'value' => '0',
+        'disporder' => 3,
         'gid' => intval($gid),
     );
 
