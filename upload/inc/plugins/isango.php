@@ -370,7 +370,7 @@ function isango_login($user, $gateway)
                         $gid = 2; // Reset to registered usergroup
                     }
 
-                    $password = base64_encode(random_bytes(10)) . 'aZ9'; // Randpm pass, PHP 7+
+                    $password = isango_makepass();
                     // Set the data for the new user.
                     $userhandler->set_data(array(
                         "username" => $username,
@@ -443,6 +443,22 @@ function isango_login($user, $gateway)
     }
 
     redirect($redirect_url, $redirect_message);
+}
+
+function isango_makepass() {
+	global $mybb;
+    $password = '';
+	$minpass = $mybb->settings['minpasswordlength'];
+	$maxpass = $mybb->settings['maxpasswordlength'];
+	if(!$minpass) $minpass = $maxpass;
+	if(!$maxpass) $maxpass = $minpass;
+	$passlen = $maxpass + $minpass;
+	$passlen = ($passlen) ? floor($passlen / 2) : 16;
+    $chars = array_merge(range('a', 'z'), range('A', 'Z'), range(0, 9));
+    for ($i = 0; $i < $passlen; $i ++) {
+        $password .= $chars[array_rand($chars)];
+    }
+    return $password;
 }
 
 function isango_purename($username)
