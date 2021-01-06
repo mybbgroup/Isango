@@ -10,6 +10,7 @@ $plugins->add_hook('member_login', 'isango_bridge');
 $plugins->add_hook('usercp_menu', 'isango_ucpnav', 25);
 $plugins->add_hook('usercp_start', 'isango_connections');
 $plugins->add_hook('admin_settings_print_peekers', 'isango_settingspeekers');
+$plugins->add_hook('datahandler_user_validate', 'isango_bypasserror');
 $plugins->add_hook('datahandler_user_delete_end', 'isango_purgeconnections');
 
 function isango_info()
@@ -371,6 +372,8 @@ function isango_login($user, $gateway)
                     }
 
                     $password = isango_makepass();
+                    $userhandler->operator = "isango";
+                    
                     // Set the data for the new user.
                     $userhandler->set_data(array(
                         "username" => $username,
@@ -459,6 +462,16 @@ function isango_makepass() {
         $password .= $chars[array_rand($chars)];
     }
     return $password;
+}
+
+function isango_bypasserror(&$userdata) // Thanks @Shade
+{
+	if ($userdata->operator && $userdata->operator == "isango") {
+		unset($userdata->errors['missing_required_profile_field'],
+		$userdata->errors['bad_profile_field_values'],
+		$userdata->errors['max_limit_reached'],
+		$userdata->operator);
+	}
 }
 
 function isango_purename($username)
