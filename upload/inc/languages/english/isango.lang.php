@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * @Package: Isango : Frontend Languages
+ * @description: Simple Social Login / Register for MyBB Using oAuth 2.0
+ * @version: 2.0.0
+ * @author: MyBB Group Developers (effone)
+ * @authorsite: https://mybb.group
+ * @update: 16-Jan-2020
+ */
+
 $l['gateway_not_supported'] = "Login with '{1}' is not supported.";
 $l['gateway_not_enabled'] = "Login with '{1}' is disabled by the Administrator.";
 $l['gateway_not_configured'] = "Login with '{1}' is not configured properly. Please contact Administrator.";
