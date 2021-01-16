@@ -28,7 +28,7 @@ function isango_info()
 		'name' => 'Isango',
 		'description' => 'Simple Social Login / Register Using oAuth 2.0',
 		'website' => 'https://github.com/mybbgroup/Isango',
-		'author' => 'effone</a> of <a href="https://mybb.group">MyBBGroup</a>',
+		'author' => 'effone</a> of <a href="https://mybb.group">MyBBGroup',
 		'authorsite' => 'https://eff.one',
 		'version' => '2.0.0',
 		'compatibility' => '18*',
