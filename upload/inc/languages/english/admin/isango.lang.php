@@ -1,4 +1,12 @@
 <?php
+/**
+ * @Package: Isango : Admic CP Languages
+ * @description: Simple Social Login / Register for MyBB Using oAuth 2.0
+ * @version: 2.0.0
+ * @author: MyBB Group Developers (effone)
+ * @authorsite: https://mybb.group
+ * @update: 16-Jan-2020
+ */
 
 $l['isango_title'] = 'Isango';
 $l['isango_description'] = 'Simple Social Login / Register Using oAuth 2.0';
