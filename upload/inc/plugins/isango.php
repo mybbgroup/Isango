@@ -229,7 +229,7 @@ function isango_bridge()
                     foreach ($conf['url'] as $url) {
                         $params = array('code' => $data['access_token'], 'url' => $url);
                         $response = isango_curl($params, $mybb->input['gateway']);
-                        $user = array_merge($user, $response);
+                        $user = array_merge_recursive($user, $response);
                     }
                 } catch (Exception $e) {
                     $errors = $e->getMessage();
