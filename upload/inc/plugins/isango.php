@@ -294,8 +294,10 @@ function isango_login($user, $gateway)
 
     foreach ($udata as $key => $val) {
         $udata[$key] = $val = filter_var($db->escape_string($val), FILTER_SANITIZE_STRING);
-        if (empty($val) || ($val == "email" && !filter_var($val, FILTER_VALIDATE_EMAIL))) {
-            $errors[] = "'" . ucfirst($key) . "'";
+        if(in_array($key, ['id', 'name', 'email'])) {
+            if (empty($val) || ($key == "email" && !filter_var($val, FILTER_VALIDATE_EMAIL))) {
+                $errors[] = "'" . ucfirst($key) . "'";
+            }
         }
     }
 
