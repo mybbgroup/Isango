@@ -259,6 +259,7 @@ function isango_bridge()
                 $state = hash('sha256', microtime(true) . rand() . $_SERVER['REMOTE_ADDR']);
                 my_setcookie("isango_state", $state, '', true, "lax"); // Set a cookie to verify response
 
+				if(!isset($conf['params'])) $conf['params'] = [];
                 $params = array_merge(array(
                     'client_id' => $mybb->settings['isango_' . $gateway . '_id'],
                     'redirect_uri' => $mybb->settings['bburl'] . '/member.php?action=login&gateway=' . $gateway,
