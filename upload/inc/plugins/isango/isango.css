@@ -114,6 +114,19 @@ a.isango_github:hover {
 	background: #0e1011 !important;
 }
 
+a.isango_twitch {
+	background: #9146FF !important;
+	border: 1px solid #7313ff !important;
+}
+
+a.isango_twitch span:before {
+	content: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24px' height='24px' fill='white'><path d='M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.6 0 12 0zm7.5 14.1l-2.1 2-2.1 2h-3.1l-1 1-1 1h-2v-2H4.5V7.7l.3-.8c.2-.4.4-1 .5-1.3l.2-.6H19.4v9.1zM6.9 15.8H10v2l1-1 1-1h3.8l1.2-1.1 1.2-1.1V6.3H6.9zm7.2-5V8.9h1.3v3.9h-1.3zm-3.7 0V8.9h1.3v3.9h-1.3z' /></svg>");
+}
+
+a.isango_twitch:hover {
+	background: #7313ff !important;
+}
+
 a.isango_imgur {
 	background: #11b76e !important;
 	border: 1px solid #0d8852 !important;
