@@ -6,7 +6,7 @@
  * @version: 2.0.0
  * @author: MyBB Group Developers (effone)
  * @authorsite: https://mybb.group
- * @update: 16-Jan-2020
+ * @update: 23-Jan-2020
  */
 
 if (!defined("IN_MYBB")) {
@@ -691,6 +691,8 @@ function isango_connections()
 		$query = $db->simple_select('isango', '*', 'uid="' . $mybb->user['uid'] . '"');
 		while ($conn = $db->fetch_array($query)) {
 			$alt_row = alt_trow();
+			$state = isango_gateway_error($conn['gateway']) ? 'offline' : 'online';
+			$state_tip = $lang->{'isango_state' . $state};
 			$conn['gateway'] = ucfirst($conn['gateway']);
 			$conn['dateline'] = my_date($mybb->settings['dateformat'], $conn['dateline']);
 			eval("\$connections .= \"" . $templates->get("usercp_connections_connection") . "\";");
