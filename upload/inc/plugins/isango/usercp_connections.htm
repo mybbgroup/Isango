@@ -1,6 +1,6 @@
 <html>
 <head>
-	<title>{$mybb->settings['bbname']} - {$lang->isango_nav_connections}</title>
+	<title>{$mybb->settings['bbname']} - {$lang->isango_connect_title}</title>
 	{$headerinclude}
 </head>
 <body>
@@ -9,7 +9,7 @@
 		<tr>
 			{$usercpnav}
 			<td valign="top">
-				<form action="usercp.php" method="post" name="input">
+				<form action="usercp.php" method="post" id="isango_conndel">
 					<input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
 					<input type="hidden" name="action" value="delete_connections" />
 					<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
@@ -21,7 +21,7 @@
 							<td class="tcat" align="center" width="30%"><span class="smalltext"><strong>{$lang->isango_identifier}</strong></span></td>
 							<td class="tcat" align="center" width="20%"><span class="smalltext"><strong>{$lang->isango_regmail}</strong></span></td>
 							<td class="tcat" align="center" width="20%"><span class="smalltext"><strong>{$lang->isango_regdate}</strong></span></td>
-							<td class="tcat" align="center" width="1"><input name="allbox" title="Select All" type="checkbox" class="checkbox checkall" value="1" /></td>
+							<td class="tcat" align="center" width="1"><input name="allbox" title="{$lang->isango_selectallconn}" type="checkbox" class="checkbox checkall" value="1" /></td>
 						</tr>
 						{$connections}
 						<tr>
@@ -46,5 +46,29 @@
 		</tr>
 	</table>
 	{$footer}
+	<script type="text/javascript">
+		lang.confirmconndel = "{$lang->isango_confirmconndel}";
+		lang.noconnselected = "{$lang->isango_noconnselected}";
+		$(function(){
+			$('input[name="delete"]').on('click', function(){
+				if($("input:checkbox[name='cid[]']:checked").length > 0){
+					MyBB.prompt(lang.confirmconndel, {
+						buttons: [
+							{ title: yes_confirm, value: true },
+							{ title: no_confirm, value: false }
+						],
+						submit: function (e, v, m, f) {
+							if (v == true) {
+								$('#isango_conndel').trigger('submit');
+							}
+						}
+					});
+				} else {
+					$.jGrowl(lang.noconnselected, { theme: 'jgrowl_error' });
+				}
+				return false;
+			});
+		});
+	</script>
 </body>
 </html>
