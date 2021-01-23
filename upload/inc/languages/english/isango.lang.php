@@ -6,7 +6,7 @@
  * @version: 2.0.0
  * @author: MyBB Group Developers (effone)
  * @authorsite: https://mybb.group
- * @update: 23-Jan-2020
+ * @update: 23-Jan-2021
  */
 
 $l['gateway_not_supported'] = "Login with '{1}' is not supported.";
