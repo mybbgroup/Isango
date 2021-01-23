@@ -50,7 +50,7 @@
 		lang.confirmconndel = "{$lang->isango_confirmconndel}";
 		lang.noconnselected = "{$lang->isango_noconnselected}";
 		$(function(){
-			$('input[name="delete"]').on('click', function(){
+			$('#isango_conndel input[name="delete"]').on('click', function(){
 				if($("input:checkbox[name='cid[]']:checked").length > 0){
 					MyBB.prompt(lang.confirmconndel, {
 						buttons: [
