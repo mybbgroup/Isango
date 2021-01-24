@@ -5,7 +5,7 @@
  * @version: 2.0.0
  * @author: MyBB Group Developers (effone)
  * @authorsite: https://mybb.group
- * @update: 16-Jan-2020
+ * @update: 16-Jan-2021
  */
 
 $l['isango_title'] = 'Isango';

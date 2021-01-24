@@ -6,7 +6,7 @@
  * @version: 2.0.0
  * @author: MyBB Group Developers (effone)
  * @authorsite: https://mybb.group
- * @update: 16-Jan-2020
+ * @update: 23-Jan-2021
  */
 
 $l['gateway_not_supported'] = "Login with '{1}' is not supported.";
@@ -24,6 +24,9 @@ $l['isango_gateway'] = "Gateway";
 $l['isango_regmail'] = "Associated email";
 $l['isango_identifier'] = "Identifier";
 $l['isango_regdate'] = "Registered On";
+$l['isango_state'] = "State";
+$l['isango_stateoffline'] = "Inactive Connection";
+$l['isango_stateonline'] = "Active Connection";
 $l['isango_nav_connections'] = "Connections";
 $l['isango_connect_new'] = "Connect New Authentication";
 $l['isango_connect_title'] = "Connected Authentications";
