@@ -460,9 +460,9 @@ function isango_login($user, $gateway)
 			}
 		} else {
 			$redirect_message = $lang->sprintf($lang->auth_success_loggedin_redirect, ucfirst($gateway));
-			$make_connection = true; // OK, we need to decide here
+			if(!$connected) $make_connection = true; // OK, we need to decide here
 			if ($mybb->settings['isango_single_connection']) {
-				if ($db->fetch_field($db->simple_select("isango", "COUNT(cid) AS conn", "gateway='" . $gateway . "' AND uid='" . $user_info['uid'] . "'"), "conn")) {
+				if (!$connected && $db->fetch_field($db->simple_select("isango", "COUNT(cid) AS conn", "gateway='" . $gateway . "' AND uid='" . $user_info['uid'] . "'"), "conn")) {
 					$redirect_message .= " " . $lang->sprintf($lang->isango_single_connection_redirect, ucwords($gateway));
 					$make_connection = false; // The vital decision
 				}
