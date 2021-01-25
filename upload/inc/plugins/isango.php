@@ -6,7 +6,7 @@
  * @version: 2.0.0
  * @author: MyBB Group Developers (effone)
  * @authorsite: https://mybb.group
- * @update: 23-Jan-2021
+ * @update: 25-Jan-2021
  */
 
 if (!defined("IN_MYBB")) {
@@ -292,12 +292,14 @@ function isango_login($user, $gateway)
 	$lang->load('isango');
 	$errors = array();
 	$udata = isango_fetchinfo($user, $gateway);
+	$verified = false;
 
 	// Check verified status, if available
 	if (isset($udata['vfd'])) {
 		if (!$udata['vfd']) {
-			error($lang->isango_unverified_data, $lang->isango_unverified_title);
+			return $lang->isango_unverified_data;
 		} else {
+			$verified = true;
 			unset($udata['vfd']);
 		}
 	}
@@ -313,32 +315,61 @@ function isango_login($user, $gateway)
 
 	if (!empty($errors)) {
 		$errors = implode(', ', $errors);
-		error($lang->sprintf($lang->isango_invalid_data, ucfirst($gateway), $errors), $lang->isango_connect_error_title);
+		return $lang->sprintf($lang->isango_invalid_data, ucfirst($gateway), $errors);
+	} else if (is_banned_email($udata['email'], true)) { // Check for banned email
+		return $lang->auth_email_banned;
 	} else {
 		extract($udata);
 	}
+	$connected = 0;
+	$dbuser_state = [];
+	$logged_in = $mybb->user['uid'];
+	$make_connection = false;
 
-	// Check for banned email
-	if (is_banned_email($email, true)) {
-		return $lang->auth_email_banned;
-	}
-
-	// Check availability of username by email
 	$query = $db->query("
-        SELECT u.uid, u.loginkey
+        SELECT u.uid, u.loginkey, i.gateway, i.cuid, u.email as umail, i.email as imail 
         FROM " . TABLE_PREFIX . "users u
         LEFT JOIN " . TABLE_PREFIX . "isango i ON (i.uid=u.uid)
         WHERE u.email='{$email}'
-        OR (i.gateway='{$gateway}' AND i.email='{$email}')
-        OR (i.gateway='{$gateway}' AND i.cuid='{$id}')
-    ");
-	$user_info = $db->fetch_array($query);
+        OR i.email='{$email}'
+	");
 
-	// We need to reconfirm about the gateway entry
-	$connected = 0;
-	$logged_in = $mybb->user['uid'];
-	if ($user_info) {
-		$connected = $db->fetch_array($db->simple_select('isango', 'uid', "(gateway='{$gateway}' AND email='{$email}') OR (gateway='{$gateway}' AND cuid='{$id}')"));
+	while ($dbuser = $db->fetch_array($query)) {
+		if($dbuser['gateway'] == $gateway && $dbuser['imail'] == $email && $dbuser['cuid'] == $id) { // Its a perfect match in connection table
+			$connected = $user_info['uid'] = $dbuser['uid'];
+			$user_info['loginkey'] = $dbuser['loginkey'];
+			$dbuser_state = []; // Security OK. Reset earlier states
+			$make_connection = false;
+			break;
+		} else if($dbuser['umail'] == $email) { // We got an email match in user table
+			if($verified) {	// The return email from gateway is verified. 
+				$user_info['uid'] = $dbuser['uid'];
+				$user_info['loginkey'] = $dbuser['loginkey'];
+				$dbuser_state['native'] = 0; // Security OK. Reset earlier native state
+				$make_connection = true; // Will check single connection later
+			} else if(!isset($dbuser_state['native']) || $dbuser_state['native'] != 0){
+				$dbuser_state['native'] = 1; // Verified status missing, can't allow match with user table
+			}
+		} else if($dbuser['imail'] == $email && $dbuser['gateway'] != $gateway) { // email registered with other gateway
+			$conf = isango_config($dbuser['gateway'], 'info');
+			if($verified && isset($conf['vfd'])) { // email of both gateways are verified
+				$user_info['uid'] = $dbuser['uid'];
+				$user_info['loginkey'] = $dbuser['loginkey'];
+				$dbuser_state['foreign'] = 0; // Security OK. Reset earlier foreign state
+				$make_connection = true; // Will check single connection later
+			} else if(!isset($dbuser_state['foreign']) || $dbuser_state['foreign'] != 0){
+				$dbuser_state['foreign'] = 1; // Can't allow with the other gateway data
+			}
+		}
+	}
+
+	if(count($dbuser_state)) {
+		foreach($dbuser_state as $k => $v){
+			if(!$v) unset($dbuser_state[$k]);
+		}
+		if(count($dbuser_state)) {
+			return $lang->{"isango_security_".array_keys($dbuser_state)[0]}; // Consider first breach
+		}
 	}
 
 	if (!$logged_in) {
@@ -421,32 +452,44 @@ function isango_login($user, $gateway)
 					if ($pmhandler->validate_pm()) {
 						$pmhandler->insert_pm();
 					}
+					$redirect_message = $lang->sprintf($lang->auth_success_registered_redirect, ucfirst($gateway));
+					$make_connection = true; // Ofcourse, its a fresh account
 				}
 			} else {
-				error($lang->isango_registration_restricted, $lang->isango_regrestrict_title);
+				return $lang->isango_registration_restricted;
+			}
+		} else {
+			$redirect_message = $lang->sprintf($lang->auth_success_loggedin_redirect, ucfirst($gateway));
+			if(!$connected) $make_connection = true; // OK, we need to decide here
+			if ($mybb->settings['isango_single_connection']) {
+				if (!$connected && $db->fetch_field($db->simple_select("isango", "COUNT(cid) AS conn", "gateway='" . $gateway . "' AND uid='" . $user_info['uid'] . "'"), "conn")) {
+					$redirect_message .= " " . $lang->sprintf($lang->isango_single_connection_redirect, ucwords($gateway));
+					$make_connection = false; // The vital decision
+				}
 			}
 		}
 
 		$redirect_url = 'index.php';
-		$redirect_message = $lang->sprintf($lang->auth_success_registered_redirect, ucfirst($gateway));
 
 		// We have the user with us, let's log the user in
 		my_setcookie("mybbuser", $user_info['uid'] . "_" . $user_info['loginkey'], null, true, "lax");
 	} else { // User already logged in
 		$redirect_url = 'usercp.php?action=connections';
 		if ($connected) {
-			if ($connected['uid'] !== $mybb->user['uid']) {
+			if ($connected !== $mybb->user['uid']) {
 				error($lang->isango_existing_connection, $lang->isango_connect_error_title);
 			}
 			$redirect_message = $lang->sprintf($lang->auth_already_connected_redirect, ucfirst($gateway));
+			$make_connection = false; // Its connected. Tada
 		} else {
 			$redirect_message = $lang->sprintf($lang->auth_success_connected_redirect, ucfirst($gateway));
+			$make_connection = true; // Its validated already, Yes, if we have reached so far
 		}
 		$user_info['uid'] = $mybb->user['uid'];
 	}
 
 	// Make the connection entry
-	if (!$connected) {
+	if (!$connected && $make_connection) {
 		$connected = array(
 			'uid' => $user_info['uid'],
 			'gateway' => $gateway,
