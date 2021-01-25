@@ -6,7 +6,7 @@
  * @version: 2.0.0
  * @author: MyBB Group Developers (effone)
  * @authorsite: https://mybb.group
- * @update: 23-Jan-2021
+ * @update: 25-Jan-2021
  */
 
 if (!defined("IN_MYBB")) {
