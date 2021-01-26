@@ -737,7 +737,7 @@ function isango_connections()
 			$state = isango_gateway_error($conn['gateway']) ? 'offline' : 'online';
 			$state_tip = $lang->{'isango_state' . $state};
 			$conn['gateway'] = ucfirst($conn['gateway']);
-			$conn['dateline'] = my_date($mybb->settings['dateformat'], $conn['dateline']);
+			$conn['dateline'] = my_date('relative', $conn['dateline']);
 			eval("\$connections .= \"" . $templates->get("usercp_connections_connection") . "\";");
 		}
 
