@@ -6,7 +6,7 @@
  * @version: 2.0.0
  * @author: MyBB Group Developers (effone)
  * @authorsite: https://mybb.group
- * @update: 25-Jan-2021
+ * @update: 26-Jan-2021
  */
 
 if (!defined("IN_MYBB")) {
@@ -14,6 +14,7 @@ if (!defined("IN_MYBB")) {
 }
 
 $plugins->add_hook('global_start', 'isango_buttons');
+$plugins->add_hook('global_start', 'isango_templates');
 $plugins->add_hook('error', 'isango_buttons_nopermit');
 $plugins->add_hook('member_login', 'isango_bridge');
 $plugins->add_hook('usercp_menu', 'isango_ucpnav', 25);
@@ -213,6 +214,21 @@ function isango_settingspeekers(&$peekers)
 		foreach (array('ID', 'Secret') as $key) {
 			$peekers[] = 'new Peeker($(".setting_isango_' . $gateway . '_enabled"), $("#row_setting_isango_' . $gateway . '_' . strtolower($key) . '"),/1/,true)';
 		}
+	}
+}
+
+function isango_templates()
+{
+	if (defined('THIS_SCRIPT') && THIS_SCRIPT == 'usercp.php') {
+		global $db, $templatelist;
+		if (!isset($templatelist)) {
+			$templatelist = '';
+		} else {
+			$templatelist .= ', ';
+		}
+		$templatelist .= implode(', ', array_map(function ($tpl) use ($db) {
+			return $db->escape_string(strtolower(basename($tpl, '.htm')));
+		}, (glob(MYBB_ROOT . 'inc/plugins/isango/*.htm'))));
 	}
 }
 
