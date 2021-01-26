@@ -621,23 +621,25 @@ function isango_buttons($return = false, $skip = array())
 	global $mybb, $isango_buttons;
 	$isango_buttons = "";
 
-	// Detect and skip for single connection
-	if ($mybb->user['uid'] && $mybb->settings['isango_single_connection']) {
-		global $db;
-		$query = $db->simple_select('isango', 'gateway', "uid='" . $mybb->user['uid'] . "'");
-		while ($service = $db->fetch_array($query)) {
-			$skip[] = $service['gateway'];
+	if($mybb->settings['isango_active']) {
+		// Detect and skip for single connection
+		if ($mybb->user['uid'] && $mybb->settings['isango_single_connection']) {
+			global $db;
+			$query = $db->simple_select('isango', 'gateway', "uid='" . $mybb->user['uid'] . "'");
+			while ($service = $db->fetch_array($query)) {
+				$skip[] = $service['gateway'];
+			}
 		}
-	}
 
-	foreach (isango_config() as $gateway) {
-		if (!in_array($gateway, $skip) && !isango_gateway_error($gateway)) {
-			$isango_buttons .= '<a class="isango_button isango_' . $gateway . '" href="member.php?action=login&gateway=' . $gateway . '"><span>' . ucfirst($gateway) . '</span></a>';
+		foreach (isango_config() as $gateway) {
+			if (!in_array($gateway, $skip) && !isango_gateway_error($gateway)) {
+				$isango_buttons .= '<a class="isango_button isango_' . $gateway . '" href="member.php?action=login&gateway=' . $gateway . '"><span>' . ucfirst($gateway) . '</span></a>';
+			}
 		}
-	}
 
-	if (!empty($isango_buttons)) {
-		$isango_buttons = "<div style='text-align: center; margin-top: 10px;'>" . $isango_buttons . "</div>";
+		if (!empty($isango_buttons)) {
+			$isango_buttons = "<div style='text-align: center; margin-top: 10px;'>" . $isango_buttons . "</div>";
+		}
 	}
 
 	if ($return) {
@@ -780,66 +782,44 @@ function isango_checksettings($gid = 0)
 		$gid = $db->insert_id();
 	}
 
-	// Commom settings
-	$isango_opts = array();
-
-	$isango_opts[] = array(
-		'name' => 'isango_allow_register',
-		'title' => $lang->isango_allow_register_title,
-		'description' => $lang->isango_allow_register_desc,
-		'optionscode' => 'onoff',
-		'value' => '1',
-		'disporder' => 0,
-		'gid' => intval($gid),
+	// Commom settings	// Commom settings
+	$isango_opts = array(
+		['active', 'yesno', '1'],
+		['allow_register', 'onoff', '1'],
+		['notify_registered', 'onoff', '0'],
+		['default_gid', 'groupselectsingle', '2'],
+		['single_connection', 'onoff', '0']
 	);
-
-	$isango_opts[] = array(
-		'name' => 'isango_notify_registered',
-		'title' => $lang->isango_notify_registered_title,
-		'description' => $lang->isango_notify_registered_desc,
-		'optionscode' => 'onoff',
-		'value' => '0',
-		'disporder' => 1,
-		'gid' => intval($gid),
-	);
-
-	$isango_opts[] = array(
-		'name' => 'isango_default_gid',
-		'title' => $lang->isango_default_gid_title,
-		'description' => $lang->isango_default_gid_desc,
-		'optionscode' => 'groupselectsingle',
-		'value' => 2,
-		'disporder' => 2,
-		'gid' => intval($gid),
-	);
-
-	$isango_opts[] = array(
-		'name' => 'isango_single_connection',
-		'title' => $lang->isango_single_connection_title,
-		'description' => $lang->isango_single_connection_desc,
-		'optionscode' => 'onoff',
-		'value' => '0',
-		'disporder' => 3,
-		'gid' => intval($gid),
-	);
+	$disporder = 0;
+	$isango_settings = array();
+	
+	foreach ($isango_opts as $isango_opt) {
+		$isango_opt[0] = 'isango_' . $isango_opt[0];
+		$isango_opt = array_combine(['name', 'optionscode', 'value'], $isango_opt);
+		$isango_opt['title'] = $lang->{$isango_opt['name'] . "_title"};
+		$isango_opt['description'] = $lang->{$isango_opt['name'] . "_desc"};
+		$isango_opt['disporder'] = $disporder++;
+		$isango_opt['gid'] = intval($gid);
+		$isango_settings[] = $isango_opt;
+	}
 
 	if (!$rebuild) {
 		$query = $db->simple_select("settings", "name", "name LIKE 'isango_%' AND name NOT LIKE 'isango_%\\_enabled' AND name NOT LIKE 'isango_%\\_id' AND name NOT LIKE 'isango_%\\_secret'");
 
 		while ($existing_settings = $db->fetch_array($query)) {
 			$count++;
-			foreach ($isango_opts as $key => $val) {
+			foreach ($isango_settings as $key => $val) {
 				if ($val['name'] == $existing_settings["name"]) {
 					$db->update_query('settings', ['disporder' => $val['disporder']], "name='" . $val['name'] . "'");
-					unset($isango_opts[$key]);
+					unset($isango_settings[$key]);
 				}
 			}
 		}
 	}
 
-	if (!empty($isango_opts)) {
+	if (!empty($isango_settings)) {
 		$rebuild = 1;
-		foreach ($isango_opts as $isango_opt) {
+		foreach ($isango_settings as $isango_opt) {
 			$count++;
 			$db->insert_query("settings", $isango_opt);
 		}
