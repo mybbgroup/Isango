@@ -765,7 +765,7 @@ function isango_purgeconnections(&$users)
 function isango_mergeconnections(){
 	global $db, $source_user, $destination_user;
 	if($source_user['uid'] && $destination_user['uid']) {
-		$db->update_query("users", array('uid' => $destination_user['uid']), "uid='{$source_user['uid']}'");
+		$db->update_query("isango", array('uid' => $destination_user['uid']), "uid='{$source_user['uid']}'");
 	}
 }
 
