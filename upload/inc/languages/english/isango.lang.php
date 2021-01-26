@@ -22,6 +22,8 @@ $l['auth_success_registered_redirect'] = "Welcome. Successfully registered using
 $l['auth_already_connected_redirect'] = "The profile from '{1}' which you are trying to connect is already registered with your account.";
 $l['auth_success_connected_redirect'] = "Gateway '{1}' is successfully connected to your account.";
 $l['isango_single_connection_redirect'] = "However; there is already a connection in your account with gateway '{1}', hence new connection is not added to your account as per adminidtrative decision.";
+$l['isango_login_title'] = "Login with <a href='https://mybb.group/Thread-Isango'><b>Isango</b></a>";
+$l['isango_login_placeholder'] = "Select a gateway...";
 $l['isango_gateway'] = "Gateway";
 $l['isango_regmail'] = "Associated email";
 $l['isango_identifier'] = "Identifier";

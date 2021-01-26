@@ -221,16 +221,17 @@ function isango_settingspeekers(&$peekers)
 function isango_templates()
 {
 	global $mybb;
-	if($mybb->settings['isango_active'] && defined('THIS_SCRIPT') && THIS_SCRIPT == 'usercp.php') {
+	if ($mybb->settings['isango_active']) {
 		global $db, $templatelist;
 		if (!isset($templatelist)) {
 			$templatelist = '';
 		} else {
 			$templatelist .= ', ';
 		}
+		$glue = (defined('THIS_SCRIPT') && THIS_SCRIPT == 'usercp.php') ? "" : "global";
 		$templatelist .= implode(', ', array_map(function ($tpl) use ($db) {
 			return $db->escape_string(strtolower(basename($tpl, '.htm')));
-		}, (glob(MYBB_ROOT . 'inc/plugins/isango/*.htm'))));
+		}, (glob(MYBB_ROOT . "inc/plugins/isango/{$glue}*.htm"))));
 	}
 }
 
