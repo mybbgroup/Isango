@@ -20,6 +20,7 @@ $plugins->add_hook('member_login', 'isango_bridge');
 $plugins->add_hook('usercp_menu', 'isango_ucpnav', 25);
 $plugins->add_hook('usercp_start', 'isango_connections');
 $plugins->add_hook('admin_settings_print_peekers', 'isango_settingspeekers');
+$plugins->add_hook('admin_user_users_merge_commit', 'isango_mergeconnections');
 $plugins->add_hook('datahandler_user_validate', 'isango_bypasserror');
 $plugins->add_hook('datahandler_user_delete_end', 'isango_purgeconnections');
 
@@ -775,6 +776,13 @@ function isango_purgeconnections(&$users)
 {
 	global $db;
 	$db->delete_query('isango', "uid IN({$users->delete_uids})");
+}
+
+function isango_mergeconnections(){
+	global $db, $source_user, $destination_user;
+	if($source_user['uid'] && $destination_user['uid']) {
+		$db->update_query("isango", array('uid' => $destination_user['uid']), "uid='{$source_user['uid']}'");
+	}
 }
 
 function isango_checksettings($gid = 0)
