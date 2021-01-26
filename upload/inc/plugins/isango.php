@@ -813,7 +813,7 @@ function isango_checksettings($gid = 0)
 		$gid = $db->insert_id();
 	}
 
-	// Commom settings	// Commom settings
+	// Commom settings
 	$isango_opts = array(
 		['active', 'yesno', '1'],
 		['allow_register', 'onoff', '1'],
