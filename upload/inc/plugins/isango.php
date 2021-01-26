@@ -220,7 +220,8 @@ function isango_settingspeekers(&$peekers)
 
 function isango_templates()
 {
-	if (defined('THIS_SCRIPT') && THIS_SCRIPT == 'usercp.php') {
+	global $mybb;
+	if($mybb->settings['isango_active'] && defined('THIS_SCRIPT') && THIS_SCRIPT == 'usercp.php') {
 		global $db, $templatelist;
 		if (!isset($templatelist)) {
 			$templatelist = '';
@@ -236,7 +237,7 @@ function isango_templates()
 function isango_bridge()
 {
 	global $mybb, $errors;
-	if (isset($mybb->input['gateway'])) { // oAuth call
+	if ($mybb->settings['isango_active'] && isset($mybb->input['gateway'])) { // oAuth call
 		if (isset($mybb->input['code']) && isset($mybb->input['state'])) { // Verification return call from the gateway
 			global $lang;
 			$lang->load('isango');
@@ -638,23 +639,25 @@ function isango_buttons($return = false, $skip = array())
 	global $mybb, $isango_buttons;
 	$isango_buttons = "";
 
-	// Detect and skip for single connection
-	if ($mybb->user['uid'] && $mybb->settings['isango_single_connection']) {
-		global $db;
-		$query = $db->simple_select('isango', 'gateway', "uid='" . $mybb->user['uid'] . "'");
-		while ($service = $db->fetch_array($query)) {
-			$skip[] = $service['gateway'];
+	if($mybb->settings['isango_active']) {
+		// Detect and skip for single connection
+		if ($mybb->user['uid'] && $mybb->settings['isango_single_connection']) {
+			global $db;
+			$query = $db->simple_select('isango', 'gateway', "uid='" . $mybb->user['uid'] . "'");
+			while ($service = $db->fetch_array($query)) {
+				$skip[] = $service['gateway'];
+			}
 		}
-	}
 
-	foreach (isango_config() as $gateway) {
-		if (!in_array($gateway, $skip) && !isango_gateway_error($gateway)) {
-			$isango_buttons .= '<a class="isango_button isango_' . $gateway . '" href="member.php?action=login&gateway=' . $gateway . '"><span>' . ucfirst($gateway) . '</span></a>';
+		foreach (isango_config() as $gateway) {
+			if (!in_array($gateway, $skip) && !isango_gateway_error($gateway)) {
+				$isango_buttons .= '<a class="isango_button isango_' . $gateway . '" href="member.php?action=login&gateway=' . $gateway . '"><span>' . ucfirst($gateway) . '</span></a>';
+			}
 		}
-	}
 
-	if (!empty($isango_buttons)) {
-		$isango_buttons = "<div style='text-align: center; margin-top: 10px;'>" . $isango_buttons . "</div>";
+		if (!empty($isango_buttons)) {
+			$isango_buttons = "<div style='text-align: center; margin-top: 10px;'>" . $isango_buttons . "</div>";
+		}
 	}
 
 	if ($return) {
@@ -722,53 +725,59 @@ function isango_config(string $gateway = "", string $mode = "")
 
 function isango_ucpnav()
 {
-	global $usercpmenu, $templates, $lang;
-	$lang->load("isango");
-	eval("\$navitem = \"" . $templates->get("usercp_nav_connections") . "\";");
-	$usercpmenu = preg_replace('~(.*)' . preg_quote('</', '~') . '~su', '${1}' . $navitem . '</', $usercpmenu);
+	global $mybb;
+	if($mybb->settings['isango_active']) {
+		global $usercpmenu, $templates, $lang;
+		$lang->load("isango");
+		eval("\$navitem = \"" . $templates->get("usercp_nav_connections") . "\";");
+		$usercpmenu = preg_replace('~(.*)' . preg_quote('</', '~') . '~su', '${1}' . $navitem . '</', $usercpmenu);
+	}
 }
 
 function isango_connections()
 {
-	global $mybb, $lang, $header, $footer, $headerinclude, $templates, $theme, $usercpnav, $db;
-	$lang->load('isango');
+	global $mybb;
+	if($mybb->settings['isango_active']) {
+		global $lang, $header, $footer, $headerinclude, $templates, $theme, $usercpnav, $db;
+		$lang->load('isango');
 
-	if ($mybb->input['action'] == "delete_connections" && $mybb->request_method == "post") {
-		verify_post_check($mybb->get_input('my_post_key'));
+		if ($mybb->input['action'] == "delete_connections" && $mybb->request_method == "post") {
+			verify_post_check($mybb->get_input('my_post_key'));
 
-		if ($_POST['cid']) {
-			$cids = implode(',', array_map('intval', $_POST['cid']));
-			$db->delete_query("isango", 'uid="' . $mybb->user['uid'] . '" AND cid IN (' . $cids . ')');
+			if ($_POST['cid']) {
+				$cids = implode(',', array_map('intval', $_POST['cid']));
+				$db->delete_query("isango", 'uid="' . $mybb->user['uid'] . '" AND cid IN (' . $cids . ')');
+			}
+
+			$mybb->input['action'] = "connections";
 		}
 
-		$mybb->input['action'] = "connections";
-	}
+		if ($mybb->input['action'] == "connections") {
+			add_breadcrumb($lang->nav_usercp, "usercp.php");
+			add_breadcrumb($lang->isango_nav_connections);
+			$connections = '';
+			$query = $db->simple_select('isango', '*', 'uid="' . $mybb->user['uid'] . '"');
+			while ($conn = $db->fetch_array($query)) {
+				$alt_row = alt_trow();
+				$state = isango_gateway_error($conn['gateway']) ? 'offline' : 'online';
+				$state_tip = $lang->{'isango_state' . $state};
+				$conn['gateway'] = ucfirst($conn['gateway']);
+				$conn['dateline'] = my_date('relative', $conn['dateline']);
+				eval("\$connections .= \"" . $templates->get("usercp_connections_connection") . "\";");
+			}
 
-	if ($mybb->input['action'] == "connections") {
-		add_breadcrumb($lang->nav_usercp, "usercp.php");
-		add_breadcrumb($lang->isango_nav_connections);
-		$connections = '';
-		$query = $db->simple_select('isango', '*', 'uid="' . $mybb->user['uid'] . '"');
-		while ($conn = $db->fetch_array($query)) {
-			$alt_row = alt_trow();
-			$state = isango_gateway_error($conn['gateway']) ? 'offline' : 'online';
-			$state_tip = $lang->{'isango_state' . $state};
-			$conn['gateway'] = ucfirst($conn['gateway']);
-			$conn['dateline'] = my_date('relative', $conn['dateline']);
-			eval("\$connections .= \"" . $templates->get("usercp_connections_connection") . "\";");
+			if (empty($connections)) {
+				eval("\$connections = \"" . $templates->get("usercp_connections_none") . "\";");
+			}
+
+			$isango_buttons = isango_buttons(true);
+			if (empty($isango_buttons)) {
+				$isango_buttons = $lang->isango_no_service;
+			}
+
+			eval("\$connect_page = \"" . $templates->get("usercp_connections") . "\";");
+			output_page($connect_page);
 		}
-
-		if (empty($connections)) {
-			eval("\$connections = \"" . $templates->get("usercp_connections_none") . "\";");
-		}
-
-		$isango_buttons = isango_buttons(true);
-		if (empty($isango_buttons)) {
-			$isango_buttons = $lang->isango_no_service;
-		}
-
-		eval("\$connect_page = \"" . $templates->get("usercp_connections") . "\";");
-		output_page($connect_page);
 	}
 }
 
@@ -778,7 +787,8 @@ function isango_purgeconnections(&$users)
 	$db->delete_query('isango', "uid IN({$users->delete_uids})");
 }
 
-function isango_mergeconnections(){
+function isango_mergeconnections()
+{
 	global $db, $source_user, $destination_user;
 	if($source_user['uid'] && $destination_user['uid']) {
 		$db->update_query("isango", array('uid' => $destination_user['uid']), "uid='{$source_user['uid']}'");
@@ -805,65 +815,43 @@ function isango_checksettings($gid = 0)
 	}
 
 	// Commom settings
-	$isango_opts = array();
-
-	$isango_opts[] = array(
-		'name' => 'isango_allow_register',
-		'title' => $lang->isango_allow_register_title,
-		'description' => $lang->isango_allow_register_desc,
-		'optionscode' => 'onoff',
-		'value' => '1',
-		'disporder' => 0,
-		'gid' => intval($gid),
+	$isango_opts = array(
+		['active', 'yesno', '1'],
+		['allow_register', 'onoff', '1'],
+		['notify_registered', 'onoff', '0'],
+		['default_gid', 'groupselectsingle', '2'],
+		['single_connection', 'onoff', '0']
 	);
-
-	$isango_opts[] = array(
-		'name' => 'isango_notify_registered',
-		'title' => $lang->isango_notify_registered_title,
-		'description' => $lang->isango_notify_registered_desc,
-		'optionscode' => 'onoff',
-		'value' => '0',
-		'disporder' => 1,
-		'gid' => intval($gid),
-	);
-
-	$isango_opts[] = array(
-		'name' => 'isango_default_gid',
-		'title' => $lang->isango_default_gid_title,
-		'description' => $lang->isango_default_gid_desc,
-		'optionscode' => 'groupselectsingle',
-		'value' => 2,
-		'disporder' => 2,
-		'gid' => intval($gid),
-	);
-
-	$isango_opts[] = array(
-		'name' => 'isango_single_connection',
-		'title' => $lang->isango_single_connection_title,
-		'description' => $lang->isango_single_connection_desc,
-		'optionscode' => 'onoff',
-		'value' => '0',
-		'disporder' => 3,
-		'gid' => intval($gid),
-	);
+	$disporder = 0;
+	$isango_settings = array();
+	
+	foreach ($isango_opts as $isango_opt) {
+		$isango_opt[0] = 'isango_' . $isango_opt[0];
+		$isango_opt = array_combine(['name', 'optionscode', 'value'], $isango_opt);
+		$isango_opt['title'] = $lang->{$isango_opt['name'] . "_title"};
+		$isango_opt['description'] = $lang->{$isango_opt['name'] . "_desc"};
+		$isango_opt['disporder'] = $disporder++;
+		$isango_opt['gid'] = intval($gid);
+		$isango_settings[] = $isango_opt;
+	}
 
 	if (!$rebuild) {
 		$query = $db->simple_select("settings", "name", "name LIKE 'isango_%' AND name NOT LIKE 'isango_%\\_enabled' AND name NOT LIKE 'isango_%\\_id' AND name NOT LIKE 'isango_%\\_secret'");
 
 		while ($existing_settings = $db->fetch_array($query)) {
 			$count++;
-			foreach ($isango_opts as $key => $val) {
+			foreach ($isango_settings as $key => $val) {
 				if ($val['name'] == $existing_settings["name"]) {
 					$db->update_query('settings', ['disporder' => $val['disporder']], "name='" . $val['name'] . "'");
-					unset($isango_opts[$key]);
+					unset($isango_settings[$key]);
 				}
 			}
 		}
 	}
 
-	if (!empty($isango_opts)) {
+	if (!empty($isango_settings)) {
 		$rebuild = 1;
-		foreach ($isango_opts as $isango_opt) {
+		foreach ($isango_settings as $isango_opt) {
 			$count++;
 			$db->insert_query("settings", $isango_opt);
 		}
