@@ -371,7 +371,8 @@ function isango_login($user, $gateway)
 			}
 		} else if($dbuser['imail'] == $email && $dbuser['gateway'] != $gateway) { // email registered with other gateway
 			$conf = isango_config($dbuser['gateway'], 'info');
-			if($verified && isset($conf['vfd'])) { // email of both gateways are verified
+			if (($verified && isset($conf['vfd']))  // email of both gateways are verified
+			|| ($logged_in && $logged_in == $dbuser['uid'])) { // Its the same user, no need to check verified state
 				$user_info['uid'] = $dbuser['uid'];
 				$user_info['loginkey'] = $dbuser['loginkey'];
 				$dbuser_state['foreign'] = 0; // Security OK. Reset earlier foreign state
