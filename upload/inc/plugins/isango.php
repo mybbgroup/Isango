@@ -13,8 +13,8 @@ if (!defined("IN_MYBB")) {
 	die("Nice try but wrong place, smartass. Be a good boy and use navigation.");
 }
 
-$plugins->add_hook('global_start', 'isango_buttons');
 $plugins->add_hook('global_start', 'isango_templates');
+$plugins->add_hook('global_end', 'isango_buttons');
 $plugins->add_hook('error', 'isango_buttons_nopermit');
 $plugins->add_hook('member_login', 'isango_bridge');
 $plugins->add_hook('usercp_menu', 'isango_ucpnav', 25);
