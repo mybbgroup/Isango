@@ -637,10 +637,9 @@ function isango_curl(array $params, string $gateway, string $mode = 'api')
 
 function isango_buttons($return = false, $skip = array())
 {
-	global $mybb, $isango_buttons;
-	$isango_buttons = "";
-
-	if($mybb->settings['isango_active']) {
+	global $mybb, $templates, $lang, $isango_buttons, $isango_input;
+	$lang->load('isango');
+	if ($mybb->settings['isango_active']) {
 		// Detect and skip for single connection
 		if ($mybb->user['uid'] && $mybb->settings['isango_single_connection']) {
 			global $db;
@@ -650,14 +649,31 @@ function isango_buttons($return = false, $skip = array())
 			}
 		}
 
+		$isango_buttons = "";
+		$isango_input = [];
 		foreach (isango_config() as $gateway) {
 			if (!in_array($gateway, $skip) && !isango_gateway_error($gateway)) {
-				$isango_buttons .= '<a class="isango_button isango_' . $gateway . '" href="member.php?action=login&gateway=' . $gateway . '"><span>' . ucfirst($gateway) . '</span></a>';
+				$gateway_name = ucfirst($gateway); // Separating to target later while preserving brand case
+
+				$button_size = 'max';
+				eval('$isango_input["max"][] = "' . $templates->get('global_isango_button') . '";');
+
+				$isango_input['pop'][] = "<option value='{$gateway}'>" . $gateway_name . '</option>';
+
+				$button_size = 'min';
+				$gateway_name = ''; // Blank out gateway name for icon only buttons
+				eval('$isango_input["min"][] = "' . $templates->get('global_isango_button') . '";');
 			}
 		}
-
-		if (!empty($isango_buttons)) {
-			$isango_buttons = "<div style='text-align: center; margin-top: 10px;'>" . $isango_buttons . "</div>";
+		if (!empty($isango_input)) {
+			$button_modes = ['max', 'min', 'pop'];
+			foreach ($button_modes as $mode) {
+				$tpl = ($mode == 'pop') ? 'selectform' : 'buttonframe';
+				$isango_inputbits = implode("", $isango_input[$mode]);
+				eval('$isango_input["' . $mode . '"] = "' . $templates->get('global_isango_' . $tpl) . '";');
+			}
+			if (!in_array($mybb->settings['isango_button_mode'], $button_modes)) $mybb->settings['isango_button_mode'] = 'max'; // Reset to big buttons
+			$isango_buttons = $isango_input[$mybb->settings['isango_button_mode']];
 		}
 	}
 
