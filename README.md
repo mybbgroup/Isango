@@ -7,10 +7,10 @@
 - PHP 7.1+
 
 ## Implemented Features
-- The plugin can be functionally isolaed with a master switch without losing settings, customization and without affecting required running background processes.
-- Admins can choose to restrict registering new accounts while keeping only login ability.
+- The plugin can be functionally isolated with a master switch without losing settings, customization and without affecting required running background processes.
+- Administrators can choose to restrict registering new accounts while keeping only login ability.
 - Several modes of inputs are available: Big buttons with text, Small buttons with icon only and a select dropdown. All modes are rendered and available globally.
-- Admins can choose to allow only one connection per service for a member.
+- Administrators can choose to allow only one connection per service for a member.
 - Users can login / register through several social gateways in a click.
 - Currently supported: Amazon, Discord, Facebook, Github, Google, Imgur, LinkedIn, Microsoft, Spotify, Twitch, WordPress, Yahoo & Yandex. New services will be added to the plugin over time; however (advanced) users can easily implement other services by creating configuration `.ini` of the expected service in required pattern (no programming needed). Once a configuration file is created and placed inside `inc/plugins/isango` folder only re-anabling the plugin will activate the new service with the plugin.
 - Ability to send automated welcome private message to the newly registered user intimating the random password used to register the account.
