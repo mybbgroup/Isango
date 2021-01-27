@@ -672,8 +672,8 @@ function isango_buttons($return = false, $skip = array())
 				$isango_inputbits = implode("", $isango_input[$mode]);
 				eval('$isango_input["' . $mode . '"] = "' . $templates->get('global_isango_' . $tpl) . '";');
 			}
-			if (!in_array($mybb->settings['isango_button_mode'], $button_modes)) $mybb->settings['isango_button_mode'] = 'max'; // Reset to big buttons
-			$isango_buttons = $isango_input[$mybb->settings['isango_button_mode']];
+			if (!in_array($mybb->settings['isango_input_mode'], $button_modes)) $mybb->settings['isango_input_mode'] = 'max'; // Reset to big buttons
+			$isango_buttons = $isango_input[$mybb->settings['isango_input_mode']];
 		}
 	}
 
@@ -837,7 +837,8 @@ function isango_checksettings($gid = 0)
 		['allow_register', 'onoff', '1'],
 		['notify_registered', 'onoff', '0'],
 		['default_gid', 'groupselectsingle', '2'],
-		['single_connection', 'onoff', '0']
+		['single_connection', 'onoff', '0'],
+		['input_mode', $lang->sprintf("select\nmax={1}\nmin={2}\npop={3}", $lang->isango_input_mode_max, $lang->isango_input_mode_min, $lang->isango_input_mode_pop), 'max']
 	);
 	$disporder = 0;
 	$isango_settings = array();
