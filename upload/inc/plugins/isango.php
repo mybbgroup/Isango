@@ -361,7 +361,7 @@ function isango_login($user, $gateway)
 			$make_connection = false;
 			break;
 		} else if($dbuser['umail'] == $email) { // We got an email match in user table
-			if($verified) {	// The return email from gateway is verified. 
+			if($verified || ($logged_in && $logged_in == $dbuser['uid'])) {	// Same user or the return email from gateway is verified.
 				$user_info['uid'] = $dbuser['uid'];
 				$user_info['loginkey'] = $dbuser['loginkey'];
 				$dbuser_state['native'] = 0; // Security OK. Reset earlier native state
