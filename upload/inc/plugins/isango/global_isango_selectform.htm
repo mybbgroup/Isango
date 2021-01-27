@@ -1,0 +1,9 @@
+<label>{$lang->isango_login_title}:</label>
+<form action="member.php" method="get">
+	<input type="hidden" name="action" value="login" />
+	<select name="gateway" id="isango_selector" onchange="$(this).parents('form').trigger('submit');">
+		<option value="" style="display: none;" selected>{$lang->isango_login_placeholder}</option>
+		{$isango_inputbits}
+	</select>
+	<button type="submit" class="button">{$lang->go}</button>
+</form>

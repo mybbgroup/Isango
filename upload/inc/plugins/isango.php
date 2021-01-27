@@ -13,8 +13,8 @@ if (!defined("IN_MYBB")) {
 	die("Nice try but wrong place, smartass. Be a good boy and use navigation.");
 }
 
-$plugins->add_hook('global_start', 'isango_buttons');
 $plugins->add_hook('global_start', 'isango_templates');
+$plugins->add_hook('global_end', 'isango_buttons');
 $plugins->add_hook('error', 'isango_buttons_nopermit');
 $plugins->add_hook('member_login', 'isango_bridge');
 $plugins->add_hook('usercp_menu', 'isango_ucpnav', 25);
@@ -221,16 +221,17 @@ function isango_settingspeekers(&$peekers)
 function isango_templates()
 {
 	global $mybb;
-	if($mybb->settings['isango_active'] && defined('THIS_SCRIPT') && THIS_SCRIPT == 'usercp.php') {
+	if ($mybb->settings['isango_active']) {
 		global $db, $templatelist;
 		if (!isset($templatelist)) {
 			$templatelist = '';
 		} else {
 			$templatelist .= ', ';
 		}
+		$glue = (defined('THIS_SCRIPT') && THIS_SCRIPT == 'usercp.php') ? "" : "global";
 		$templatelist .= implode(', ', array_map(function ($tpl) use ($db) {
 			return $db->escape_string(strtolower(basename($tpl, '.htm')));
-		}, (glob(MYBB_ROOT . 'inc/plugins/isango/*.htm'))));
+		}, (glob(MYBB_ROOT . "inc/plugins/isango/{$glue}*.htm"))));
 	}
 }
 
@@ -636,10 +637,9 @@ function isango_curl(array $params, string $gateway, string $mode = 'api')
 
 function isango_buttons($return = false, $skip = array())
 {
-	global $mybb, $isango_buttons;
-	$isango_buttons = "";
-
-	if($mybb->settings['isango_active']) {
+	global $mybb, $templates, $lang, $isango_buttons, $isango_input;
+	$lang->load('isango');
+	if ($mybb->settings['isango_active']) {
 		// Detect and skip for single connection
 		if ($mybb->user['uid'] && $mybb->settings['isango_single_connection']) {
 			global $db;
@@ -649,14 +649,31 @@ function isango_buttons($return = false, $skip = array())
 			}
 		}
 
+		$isango_buttons = "";
+		$isango_input = [];
 		foreach (isango_config() as $gateway) {
 			if (!in_array($gateway, $skip) && !isango_gateway_error($gateway)) {
-				$isango_buttons .= '<a class="isango_button isango_' . $gateway . '" href="member.php?action=login&gateway=' . $gateway . '"><span>' . ucfirst($gateway) . '</span></a>';
+				$gateway_name = ucfirst($gateway); // Separating to target later while preserving brand case
+
+				$button_size = 'max';
+				eval('$isango_input["max"][] = "' . $templates->get('global_isango_button') . '";');
+
+				$isango_input['pop'][] = "<option value='{$gateway}'>" . $gateway_name . '</option>';
+
+				$button_size = 'min';
+				$gateway_name = ''; // Blank out gateway name for icon only buttons
+				eval('$isango_input["min"][] = "' . $templates->get('global_isango_button') . '";');
 			}
 		}
-
-		if (!empty($isango_buttons)) {
-			$isango_buttons = "<div style='text-align: center; margin-top: 10px;'>" . $isango_buttons . "</div>";
+		if (!empty($isango_input)) {
+			$button_modes = ['max', 'min', 'pop'];
+			foreach ($button_modes as $mode) {
+				$tpl = ($mode == 'pop') ? 'selectform' : 'buttonframe';
+				$isango_inputbits = implode("", $isango_input[$mode]);
+				eval('$isango_input["' . $mode . '"] = "' . $templates->get('global_isango_' . $tpl) . '";');
+			}
+			if (!in_array($mybb->settings['isango_input_mode'], $button_modes)) $mybb->settings['isango_input_mode'] = 'max'; // Reset to big buttons
+			$isango_buttons = $isango_input[$mybb->settings['isango_input_mode']];
 		}
 	}
 
@@ -820,7 +837,8 @@ function isango_checksettings($gid = 0)
 		['allow_register', 'onoff', '1'],
 		['notify_registered', 'onoff', '0'],
 		['default_gid', 'groupselectsingle', '2'],
-		['single_connection', 'onoff', '0']
+		['single_connection', 'onoff', '0'],
+		['input_mode', $lang->sprintf("select\nmax={1}\nmin={2}\npop={3}", $lang->isango_input_mode_max, $lang->isango_input_mode_min, $lang->isango_input_mode_pop), 'max']
 	);
 	$disporder = 0;
 	$isango_settings = array();
