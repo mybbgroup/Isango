@@ -716,10 +716,12 @@ function isango_gateway_error(string $gateway)
 function isango_config(string $gateway = "", string $mode = "")
 {
 	$path = MYBB_ROOT . 'inc/plugins/isango/%s.ini';
-	$gateways = array();
+	static $gateways = array();
 
-	foreach (glob(sprintf($path, '*')) as $gate) {
-		$gateways[] = strtolower(basename($gate, '.ini'));
+	if (empty($gateways)) {
+		foreach (glob(sprintf($path, '*')) as $gate) {
+			$gateways[] = strtolower(basename($gate, '.ini'));
+		}
 	}
 
 	if (empty($gateway)) {
