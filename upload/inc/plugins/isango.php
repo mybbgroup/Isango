@@ -277,7 +277,7 @@ function isango_bridge()
 
 			if ($mybb->user['uid'] && $mybb->settings['isango_single_connection']) { // UCP Connection add request. Validate
 				global $db, $lang;
-				if ($db->fetch_field($db->simple_select("isango", "COUNT(cid) AS conn", "gateway='" . $gateway . "' AND uid='" . $mybb->user['uid'] . "'"), "conn")) {
+				if ($db->fetch_field($db->simple_select("isango", "COUNT(cid) AS conn", "gateway='" . $db->escape_string($gateway) . "' AND uid='" . $mybb->user['uid'] . "'"), "conn")) {
 					error($lang->sprintf($lang->isango_single_connection_error, ucwords($gateway)));
 				}
 			}
