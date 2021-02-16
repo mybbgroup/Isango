@@ -32,7 +32,7 @@ function isango_info()
 		'website' => 'https://github.com/mybbgroup/Isango',
 		'author' => 'effone</a> of <a href="https://mybb.group">MyBBGroup',
 		'authorsite' => 'https://eff.one',
-		'version' => '2.0.0',
+		'version' => '2.0.1',
 		'compatibility' => '18*',
 		'codename' => 'isango',
 	);
