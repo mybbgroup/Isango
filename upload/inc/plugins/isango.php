@@ -3,10 +3,10 @@
 /**
  * @Package: Isango
  * @description: Simple Social Login / Register for MyBB Using oAuth 2.0
- * @version: 2.0.0
+ * @version: 2.0.1
  * @author: MyBB Group Developers (effone)
  * @authorsite: https://mybb.group
- * @update: 26-Jan-2021
+ * @update: 16-Feb-2021
  */
 
 if (!defined("IN_MYBB")) {
