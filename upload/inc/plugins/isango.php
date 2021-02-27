@@ -840,7 +840,7 @@ function isango_checksettings($gid = 0)
 		['allow_register', 'onoff', '1'],
 		['notify_registered', 'onoff', '0'],
 		['default_gid', 'groupselectsingle', '2'],
-		['single_connection', 'onoff', '0'],
+		['single_connection', 'onoff', '1'],
 		['input_mode', $lang->sprintf("select\nmax={1}\nmin={2}\npop={3}", $lang->isango_input_mode_max, $lang->isango_input_mode_min, $lang->isango_input_mode_pop), 'max']
 	);
 	$disporder = 0;
