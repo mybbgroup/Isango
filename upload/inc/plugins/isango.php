@@ -195,13 +195,26 @@ function isango_is_installed()
 
 function isango_uninstall()
 {
-	global $db;
-	// $db->query("drop TABLE ".TABLE_PREFIX."isango");
+	global $mybb, $db;
 
+	if($mybb->request_method != 'post')
+	{
+		global $page, $lang;
+		$lang->load('isango');
+		$page->output_confirm_action('index.php?module=config-plugins&action=deactivate&uninstall=1&plugin=isango', $lang->isango_uninstall_message, $lang->isango_uninstall);
+	}
+	
+	// Only remove the database tables if the admin has selected NOT to keep data.
+	if(!isset($mybb->input['no']))
+	{
+		$db->query("drop TABLE ".TABLE_PREFIX."isango");
+	}
+	
+	// Remove templates
 	foreach (glob(MYBB_ROOT . 'inc/plugins/isango/*.htm') as $template) {
 		$db->delete_query('templates', 'title = "' . strtolower(basename($template, '.htm')) . '"');
 	}
-
+	// Remove plugin settings
 	$db->delete_query("settings", "name LIKE '%isango_%'");
 	$db->delete_query("settinggroups", "name='isango'");
 
