@@ -29,3 +29,6 @@ $l['isango_input_mode_desc'] = 'Choose the default input mode for initiation. Ho
 $l['isango_input_mode_max'] = 'Big size buttons with text';
 $l['isango_input_mode_min'] = 'Small buttons with icon only';
 $l['isango_input_mode_pop'] = 'A select dropdown';
+
+$l['isango_uninstall'] = 'Isango Uninstallation';
+$l['isango_uninstall_message'] = 'Do you wish to drop ALL plugin data from the database? Selecting "NO" will leave untouched:<ul><li>Linked accounts for users.</li></ul>Selecting "NO" will <em>not</em>, however, prevent the removal of:<ul><li>Plugin settings (including any saved settings).</li><li>The plugin\'s stylesheet, "isango.css" (including any changes you\'ve made to it), accessible for each theme via the ACP\'s Templates & Style -> <a href=\"index.php?module=style-themes\">Themes</a> module.</li><li>The plugin\'s templates (including any changes you\'ve made to them), accessible  under each template set via the ACP\'s Templates & Style -> <a href=\"index.php?module=style-templates\">Templates</a> module.</li></ul>';
