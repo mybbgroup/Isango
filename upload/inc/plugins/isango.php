@@ -556,7 +556,7 @@ function isango_makepass()
 
 function isango_bypasserror(&$userdata) // Thanks @Shade
 {
-	if ($userdata->operator && $userdata->operator == "isango") {
+	if (isset($userdata->operator) && $userdata->operator == "isango") {
 		unset($userdata->errors['missing_required_profile_field'],
 		$userdata->errors['bad_profile_field_values'],
 		$userdata->errors['max_limit_reached'],
